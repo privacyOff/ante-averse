@@ -30,13 +30,18 @@ const GamePage = () => {
     playerTurn: true,
     gamePhase: 'start',
     winner: null,
-    anteAmount: difficulty === 'beginner' ? 50 : difficulty === 'intermediate' ? 100 : 200
+    anteAmount: difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 10 : 20,
+    currentRound: 1,
+    totalRounds: 5,
+    lastRoundWinner: null,
+    cutDeckAmount: 0
   });
   
   const [showOpponentCards, setShowOpponentCards] = useState(false);
   const [playerMessage, setPlayerMessage] = useState<string | null>(null);
   const [opponentMessage, setOpponentMessage] = useState<string | null>(null);
   const [winningHand, setWinningHand] = useState<string | null>(null);
+  const [cutAmount, setCutAmount] = useState<number>(3);
   
   // Initialize game
   useEffect(() => {
@@ -55,7 +60,10 @@ const GamePage = () => {
       currentBet: 0,
       playerTurn: true,
       gamePhase: 'start',
-      winner: null
+      winner: null,
+      currentRound: 1,
+      lastRoundWinner: null,
+      cutDeckAmount: 0
     }));
     setSelectedCards([]);
     setShowOpponentCards(false);
@@ -65,18 +73,20 @@ const GamePage = () => {
   };
   
   // Handle ante placement
-  const handleAnte = (amount: number) => {
-    if (gameState.playerChips < amount) {
+  const handleAnte = () => {
+    const anteAmount = gameState.anteAmount;
+    
+    if (gameState.playerChips < anteAmount) {
       toast.error("Not enough chips to place ante!");
       return;
     }
     
     // Deduct ante from player and opponent chips
-    const playerChips = gameState.playerChips - amount;
-    const opponentChips = gameState.opponentChips - amount;
+    const playerChips = gameState.playerChips - anteAmount;
+    const opponentChips = gameState.opponentChips - anteAmount;
     
     // Add antes to pot
-    const pot = gameState.pot + (amount * 2);
+    const pot = gameState.pot + (anteAmount * 2);
     
     // Update game state
     setGameState(prev => ({
@@ -84,7 +94,7 @@ const GamePage = () => {
       playerChips,
       opponentChips,
       pot,
-      gamePhase: 'ante',
+      gamePhase: 'cutDeck',
     }));
     
     // Update localStorage
@@ -100,11 +110,48 @@ const GamePage = () => {
   
   // Handle cutting the deck
   const handleCutDeck = () => {
-    // Shuffle the deck
-    const shuffledDeck = shuffleDeck(gameState.deck);
+    if (cutAmount < 1 || cutAmount > 10) {
+      toast.error("Cut amount must be between 1 and 10");
+      return;
+    }
+    
+    let deckAfterCut = [...gameState.deck];
+    
+    // Player cuts first in round 1, or if player won last round
+    if (gameState.currentRound === 1 || gameState.lastRoundWinner === 'player') {
+      // Player cuts
+      const topCards = deckAfterCut.slice(0, cutAmount);
+      const remainingCards = deckAfterCut.slice(cutAmount);
+      deckAfterCut = [...remainingCards, ...topCards];
+      
+      setPlayerMessage(`Cut ${cutAmount} cards`);
+      
+      // AI cuts next
+      const aiCutAmount = Math.floor(Math.random() * 5) + 1;
+      const aiTopCards = deckAfterCut.slice(0, aiCutAmount);
+      const aiRemainingCards = deckAfterCut.slice(aiCutAmount);
+      deckAfterCut = [...aiRemainingCards, ...aiTopCards];
+      
+      setOpponentMessage(`Cut ${aiCutAmount} cards`);
+    } else {
+      // AI cuts first
+      const aiCutAmount = Math.floor(Math.random() * 5) + 1;
+      const aiTopCards = deckAfterCut.slice(0, aiCutAmount);
+      const aiRemainingCards = deckAfterCut.slice(aiCutAmount);
+      deckAfterCut = [...aiRemainingCards, ...aiTopCards];
+      
+      setOpponentMessage(`Cut ${aiCutAmount} cards`);
+      
+      // Player cuts next
+      const topCards = deckAfterCut.slice(0, cutAmount);
+      const remainingCards = deckAfterCut.slice(cutAmount);
+      deckAfterCut = [...remainingCards, ...topCards];
+      
+      setPlayerMessage(`Cut ${cutAmount} cards`);
+    }
     
     // Deal 5 cards to each player
-    const { cards: playerCards, remainingDeck: deck1 } = dealCards(shuffledDeck, 5);
+    const { cards: playerCards, remainingDeck: deck1 } = dealCards(deckAfterCut, 5);
     const { cards: opponentCards, remainingDeck: deck2 } = dealCards(deck1, 5);
     
     // Update game state
@@ -114,13 +161,12 @@ const GamePage = () => {
       playerHand: playerCards,
       opponentHand: opponentCards,
       gamePhase: 'firstBet',
-      playerTurn: Math.random() > 0.5, // Randomly decide who goes first
+      playerTurn: gameState.currentRound === 1 || gameState.lastRoundWinner === 'player',
+      cutDeckAmount: cutAmount
     }));
     
-    setPlayerMessage("Cards dealt!");
-    
     // If opponent's turn, let them make a move after a delay
-    if (!gameState.playerTurn) {
+    if (!(gameState.currentRound === 1 || gameState.lastRoundWinner === 'player')) {
       setTimeout(() => {
         handleOpponentTurn('firstBet');
       }, 2000);
@@ -137,10 +183,11 @@ const GamePage = () => {
       // Player loses their bets, opponent wins the pot
       newGameState.winner = 'opponent';
       newGameState.opponentChips += newGameState.pot;
-      newGameState.gamePhase = 'gameOver';
+      newGameState.gamePhase = 'roundOver';
+      newGameState.lastRoundWinner = 'opponent';
       setShowOpponentCards(true);
       setPlayerMessage("You folded.");
-      setOpponentMessage("Opponent wins!");
+      setOpponentMessage("Opponent wins this round!");
     } 
     else if (action === 'call') {
       // Player matches the current bet
@@ -161,6 +208,20 @@ const GamePage = () => {
       newGameState.playerTurn = false;
     }
     else if (action === 'raise' && amount) {
+      // Validate bet amount based on the game phase
+      const minBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount : gameState.anteAmount * 2;
+      const maxBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6;
+      
+      if (amount < minBet) {
+        toast.error(`Minimum bet is ${minBet} chips!`);
+        return;
+      }
+      
+      if (amount > maxBet) {
+        toast.error(`Maximum bet is ${maxBet} chips!`);
+        return;
+      }
+      
       // Player raises the bet
       if (newGameState.playerChips < amount) {
         toast.error("Not enough chips to raise!");
@@ -178,7 +239,7 @@ const GamePage = () => {
     if (newGameState.gamePhase === 'firstBet' && !newGameState.playerTurn && !newGameState.winner) {
       if (newGameState.currentBet === 0) {
         newGameState.gamePhase = 'swap';
-        newGameState.playerTurn = true;
+        newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
       }
     }
     
@@ -224,10 +285,11 @@ const GamePage = () => {
         // Opponent folds
         newGameState.winner = 'player';
         newGameState.playerChips += newGameState.pot;
-        newGameState.gamePhase = 'gameOver';
+        newGameState.gamePhase = 'roundOver';
+        newGameState.lastRoundWinner = 'player';
         setShowOpponentCards(true);
         setOpponentMessage("Opponent folded!");
-        setPlayerMessage("You win!");
+        setPlayerMessage("You win this round!");
       } 
       else if (newGameState.currentBet > 0) {
         // Calculate if opponent should raise or just call
@@ -235,12 +297,18 @@ const GamePage = () => {
         
         if (shouldRaise && newGameState.opponentChips > newGameState.currentBet * 2) {
           // Opponent raises
-          const raiseAmount = getAIBetAmount(
+          const minBet = phase === 'firstBet' ? newGameState.anteAmount : newGameState.anteAmount * 2;
+          const maxBet = phase === 'firstBet' ? newGameState.anteAmount * 3 : newGameState.anteAmount * 6;
+          
+          // Get AI bet amount and ensure it's within the allowed range
+          let raiseAmount = getAIBetAmount(
             newGameState.opponentHand, 
             newGameState.pot, 
             difficulty as string, 
             newGameState.opponentChips
           );
+          
+          raiseAmount = Math.max(minBet, Math.min(raiseAmount, maxBet));
           
           newGameState.opponentChips -= raiseAmount;
           newGameState.pot += raiseAmount;
@@ -255,7 +323,7 @@ const GamePage = () => {
           
           if (phase === 'firstBet') {
             newGameState.gamePhase = 'swap';
-            newGameState.playerTurn = true;
+            newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
           } else {
             newGameState.gamePhase = 'showdown';
           }
@@ -269,12 +337,17 @@ const GamePage = () => {
         
         if (shouldBet) {
           // Opponent bets
-          const betAmount = getAIBetAmount(
+          const minBet = phase === 'firstBet' ? newGameState.anteAmount : newGameState.anteAmount * 2;
+          const maxBet = phase === 'firstBet' ? newGameState.anteAmount * 3 : newGameState.anteAmount * 6;
+          
+          let betAmount = getAIBetAmount(
             newGameState.opponentHand, 
             newGameState.pot, 
             difficulty as string, 
             newGameState.opponentChips
           );
+          
+          betAmount = Math.max(minBet, Math.min(betAmount, maxBet));
           
           newGameState.opponentChips -= betAmount;
           newGameState.pot += betAmount;
@@ -285,7 +358,7 @@ const GamePage = () => {
           // Opponent checks
           if (phase === 'firstBet') {
             newGameState.gamePhase = 'swap';
-            newGameState.playerTurn = true;
+            newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
           } else {
             newGameState.gamePhase = 'showdown';
           }
@@ -324,7 +397,16 @@ const GamePage = () => {
       
       // Move to second betting round
       newGameState.gamePhase = 'secondBet';
-      newGameState.playerTurn = true;
+      newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
+      
+      // If it's AI's turn in second betting round, process it after a delay
+      if (!newGameState.playerTurn) {
+        setGameState(newGameState);
+        setTimeout(() => {
+          handleOpponentTurn('secondBet');
+        }, 2000);
+        return;
+      }
     }
     
     // Update game state
@@ -333,7 +415,27 @@ const GamePage = () => {
   
   // Handle card swap
   const handleCardSwap = () => {
-    if (selectedCards.length === 0) return;
+    if (gameState.gamePhase !== 'swap') return;
+    
+    const cardsToSwap = selectedCards.length;
+    if (cardsToSwap === 0) {
+      setPlayerMessage("Kept all cards");
+      
+      setGameState(prev => ({
+        ...prev,
+        gamePhase: 'secondBet',
+        playerTurn: cardsToSwap > 0 ? false : prev.currentRound === 1 || prev.lastRoundWinner === 'player',
+      }));
+      
+      // If it's now opponent's turn to bet, let them make their move after a delay
+      if (!(gameState.currentRound === 1 || gameState.lastRoundWinner === 'player') && cardsToSwap === 0) {
+        setTimeout(() => {
+          handleOpponentTurn('secondBet');
+        }, 2000);
+      }
+      
+      return;
+    }
     
     // Swap selected cards
     const newPlayerHand = [...gameState.playerHand];
@@ -351,16 +453,18 @@ const GamePage = () => {
       playerHand: newPlayerHand,
       deck: newDeck,
       gamePhase: 'secondBet',
-      playerTurn: false,
+      playerTurn: prev.currentRound === 1 || prev.lastRoundWinner === 'player',
     }));
     
     setSelectedCards([]);
     setPlayerMessage(`Swapped ${selectedCards.length} card${selectedCards.length > 1 ? 's' : ''}`);
     
-    // Let opponent make their move after a delay
-    setTimeout(() => {
-      handleOpponentTurn('swap');
-    }, 2000);
+    // If it's now opponent's turn, let them make their move after a delay
+    if (!(gameState.currentRound === 1 || gameState.lastRoundWinner === 'player')) {
+      setTimeout(() => {
+        handleOpponentTurn('secondBet');
+      }, 2000);
+    }
   };
   
   // Handle showdown (compare hands)
@@ -371,24 +475,24 @@ const GamePage = () => {
     const playerHandRank = getHandRank(currentState.playerHand);
     const opponentHandRank = getHandRank(currentState.opponentHand);
     
-    let winner: 'player' | 'opponent' | 'tie' | null = null;
+    let roundWinner: 'player' | 'opponent' | 'tie' | null = null;
     
     if (result === 'hand1') {
-      winner = 'player';
+      roundWinner = 'player';
       currentState.playerChips += currentState.pot;
-      setPlayerMessage("You win!");
+      setPlayerMessage("You win this round!");
       setOpponentMessage("Opponent loses!");
       setWinningHand(`You won with ${playerHandRank.name}`);
     } 
     else if (result === 'hand2') {
-      winner = 'opponent';
+      roundWinner = 'opponent';
       currentState.opponentChips += currentState.pot;
-      setPlayerMessage("You lose!");
+      setPlayerMessage("You lose this round!");
       setOpponentMessage("Opponent wins!");
       setWinningHand(`Opponent won with ${opponentHandRank.name}`);
     } 
     else {
-      winner = 'tie';
+      roundWinner = 'tie';
       const halfPot = Math.floor(currentState.pot / 2);
       currentState.playerChips += halfPot;
       currentState.opponentChips += halfPot;
@@ -405,8 +509,23 @@ const GamePage = () => {
     window.dispatchEvent(event);
     
     // Update game state
-    currentState.winner = winner;
-    currentState.gamePhase = 'gameOver';
+    currentState.lastRoundWinner = roundWinner === 'tie' ? currentState.lastRoundWinner : roundWinner;
+    currentState.gamePhase = 'roundOver';
+    
+    // Check if this was the final round
+    if (currentState.currentRound >= currentState.totalRounds) {
+      currentState.gamePhase = 'gameOver';
+      
+      // Determine the overall winner
+      if (currentState.playerChips > currentState.opponentChips) {
+        currentState.winner = 'player';
+      } else if (currentState.opponentChips > currentState.playerChips) {
+        currentState.winner = 'opponent';
+      } else {
+        currentState.winner = 'tie';
+      }
+    }
+    
     setGameState(currentState);
   };
   
@@ -423,9 +542,59 @@ const GamePage = () => {
     });
   };
   
-  // Handle play again
+  // Handle next round
+  const handleNextRound = () => {
+    if (gameState.gamePhase !== 'roundOver') return;
+    
+    // Check if player has enough chips for the next round
+    if (gameState.playerChips < gameState.anteAmount) {
+      toast.error("Not enough chips for the next round's ante!");
+      navigate('/buy-chips');
+      return;
+    }
+    
+    // Check if opponent has enough chips for the next round
+    if (gameState.opponentChips < gameState.anteAmount) {
+      toast.success("You've cleaned out your opponent! Game over.");
+      setGameState(prev => ({
+        ...prev,
+        gamePhase: 'gameOver',
+        winner: 'player'
+      }));
+      return;
+    }
+    
+    // Reset for next round
+    const newDeck = createDeck();
+    
+    setGameState(prev => ({
+      ...prev,
+      deck: newDeck,
+      playerHand: [],
+      opponentHand: [],
+      communityCards: [],
+      pot: 0,
+      currentBet: 0,
+      gamePhase: 'start',
+      winner: null,
+      currentRound: prev.currentRound + 1
+    }));
+    
+    setSelectedCards([]);
+    setShowOpponentCards(false);
+    setPlayerMessage(`Round ${gameState.currentRound + 1} of ${gameState.totalRounds}`);
+    setOpponentMessage(null);
+    setWinningHand(null);
+  };
+  
+  // Handle play again from game over
   const handlePlayAgain = () => {
     initializeGame();
+  };
+  
+  // Update the cut amount
+  const handleCutAmountChange = (amount: number) => {
+    setCutAmount(amount);
   };
   
   return (
@@ -436,7 +605,7 @@ const GamePage = () => {
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-4 mb-8"
+          className="flex items-center justify-between gap-4 mb-8"
         >
           <button 
             onClick={() => navigate('/')}
@@ -451,6 +620,10 @@ const GamePage = () => {
               ? `Multiplayer Game (Room: ${roomCode})` 
               : `${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Game`}
           </h1>
+          <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg">
+            <span className="text-sm text-zinc-500">Round</span>
+            <span className="text-xl font-bold text-amber-500">{gameState.currentRound}/{gameState.totalRounds}</span>
+          </div>
         </motion.div>
         
         {/* Game Messages */}
@@ -526,12 +699,16 @@ const GamePage = () => {
             onCutDeck={handleCutDeck}
             onBetAction={handleBetAction}
             onSwapCards={handleCardSwap}
-            onPlayAgain={handlePlayAgain}
+            onPlayAgain={gameState.gamePhase === 'gameOver' ? handlePlayAgain : handleNextRound}
             playerChips={gameState.playerChips}
             anteAmount={gameState.anteAmount}
             currentBet={gameState.currentBet}
-            minRaise={gameState.anteAmount}
+            minRaise={gameState.gamePhase === 'firstBet' ? gameState.anteAmount : gameState.anteAmount * 2}
+            maxRaise={gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6}
             selectedCards={selectedCards}
+            cutAmount={cutAmount}
+            onCutAmountChange={handleCutAmountChange}
+            playAgainLabel={gameState.gamePhase === 'gameOver' ? 'Play Again' : 'Next Round'}
             className="max-w-md mx-auto"
           />
         </PokerTable>
@@ -544,7 +721,15 @@ const GamePage = () => {
             className="bg-black/40 backdrop-blur-md rounded-xl p-4 text-center max-w-md mx-auto"
           >
             <h3 className="text-xl font-bold text-poker-gold mb-2">{winningHand}</h3>
-            <p className="text-zinc-400">Play again for another chance to win!</p>
+            <p className="text-zinc-400">
+              {gameState.gamePhase === 'gameOver' 
+                ? gameState.winner === 'player' 
+                  ? 'Congratulations! You won the game!'
+                  : gameState.winner === 'opponent'
+                    ? 'Better luck next time, your opponent won the game.'
+                    : 'The game ended in a tie!'
+                : 'Get ready for the next round!'}
+            </p>
           </motion.div>
         )}
       </div>

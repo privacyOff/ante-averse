@@ -7,7 +7,7 @@ import { BetAction, GamePhase } from '@/types/poker';
 
 interface GameControlsProps {
   gamePhase: GamePhase;
-  onAnte?: (amount: number) => void;
+  onAnte?: () => void;
   onCutDeck?: () => void;
   onBetAction?: (action: BetAction, amount?: number) => void;
   onSwapCards?: () => void;
@@ -16,7 +16,11 @@ interface GameControlsProps {
   anteAmount: number;
   currentBet: number;
   minRaise?: number;
+  maxRaise?: number;
   selectedCards?: number[];
+  cutAmount?: number;
+  onCutAmountChange?: (amount: number) => void;
+  playAgainLabel?: string;
   className?: string;
 }
 
@@ -31,13 +35,22 @@ const GameControls = ({
   anteAmount,
   currentBet,
   minRaise = 10,
+  maxRaise = 30,
   selectedCards = [],
+  cutAmount = 3,
+  onCutAmountChange,
+  playAgainLabel = "Play Again",
   className
 }: GameControlsProps) => {
   const [betAmount, setBetAmount] = useState(minRaise);
+  const [localCutAmount, setLocalCutAmount] = useState(cutAmount);
   
   const handleAnte = () => {
-    if (onAnte) onAnte(anteAmount);
+    if (onAnte) onAnte();
+  };
+  
+  const handleCutDeck = () => {
+    if (onCutDeck) onCutDeck();
   };
   
   const handleBetAction = (action: BetAction) => {
@@ -48,6 +61,11 @@ const GameControls = ({
         onBetAction(action);
       }
     }
+  };
+  
+  const handleCutAmountChange = (value: number[]) => {
+    setLocalCutAmount(value[0]);
+    if (onCutAmountChange) onCutAmountChange(value[0]);
   };
   
   const container = {
@@ -84,14 +102,29 @@ const GameControls = ({
         </motion.div>
       )}
       
-      {gamePhase === 'ante' && (
-        <motion.div variants={item}>
-          <Button 
-            onClick={onCutDeck}
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold"
-          >
-            Cut the Deck
-          </Button>
+      {gamePhase === 'cutDeck' && (
+        <motion.div variants={container} className="space-y-4">
+          <motion.div variants={item} className="flex items-center gap-4 text-sm">
+            <span className="text-white/60">Cards to cut:</span>
+            <Slider
+              value={[localCutAmount]}
+              min={1}
+              max={10}
+              step={1}
+              onValueChange={handleCutAmountChange}
+              className="flex-1"
+            />
+            <span className="text-white/60 min-w-[20px] text-center">{localCutAmount}</span>
+          </motion.div>
+          
+          <motion.div variants={item}>
+            <Button 
+              onClick={handleCutDeck}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold"
+            >
+              Cut the Deck
+            </Button>
+          </motion.div>
         </motion.div>
       )}
       
@@ -111,7 +144,6 @@ const GameControls = ({
             <Button 
               onClick={() => handleBetAction('call')}
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={currentBet === 0}
             >
               {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
             </Button>
@@ -125,16 +157,16 @@ const GameControls = ({
           </motion.div>
           
           <motion.div variants={item} className="flex items-center gap-4 text-sm">
-            <span className="text-white/60">Min: {minRaise}</span>
+            <span className="text-white/60 min-w-[40px]">Min: {minRaise}</span>
             <Slider
               value={[betAmount]}
               min={minRaise}
-              max={Math.min(playerChips, minRaise * 10)}
-              step={minRaise}
+              max={Math.min(playerChips, maxRaise)}
+              step={5}
               onValueChange={(value) => setBetAmount(value[0])}
               className="flex-1"
             />
-            <span className="text-white/60">Max: {Math.min(playerChips, minRaise * 10)}</span>
+            <span className="text-white/60 min-w-[40px]">Max: {Math.min(playerChips, maxRaise)}</span>
           </motion.div>
         </motion.div>
       )}
@@ -144,22 +176,21 @@ const GameControls = ({
           <Button 
             onClick={onSwapCards}
             className="w-full bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white py-6 text-lg font-bold"
-            disabled={selectedCards.length === 0}
           >
             {selectedCards.length > 0 
               ? `Swap ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` 
-              : 'Select Cards to Swap'}
+              : 'Keep All Cards'}
           </Button>
         </motion.div>
       )}
       
-      {gamePhase === 'gameOver' && (
+      {(gamePhase === 'roundOver' || gamePhase === 'gameOver') && (
         <motion.div variants={item}>
           <Button 
             onClick={onPlayAgain}
             className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold"
           >
-            Play Again
+            {playAgainLabel}
           </Button>
         </motion.div>
       )}

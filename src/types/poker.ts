@@ -26,16 +26,22 @@ export interface GameState {
   gamePhase: GamePhase;
   winner: 'player' | 'opponent' | 'tie' | null;
   anteAmount: number;
+  currentRound: number;
+  totalRounds: number;
+  lastRoundWinner: 'player' | 'opponent' | null;
+  cutDeckAmount: number;
 }
 
 export type GamePhase = 
   | 'start' 
   | 'ante'
+  | 'cutDeck'
   | 'deal'
   | 'firstBet'
   | 'swap'
   | 'secondBet'
   | 'showdown'
+  | 'roundOver'
   | 'gameOver';
 
 export type BetAction = 'fold' | 'call' | 'raise';
