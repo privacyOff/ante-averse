@@ -1,17 +1,21 @@
-import { Card, CardRank, CardSuit, Hand } from '@/types/poker';
+import { Card, CardRank, CardSuit, Hand, HAND_RANKINGS, PokerHandRanking } from '@/types/poker';
 
-// Create a shuffled deck of cards
+// Create a 17-card deck for 17 Poker
 export function createDeck(): Card[] {
   const suits: CardSuit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
-  const ranks: CardRank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  const ranks: CardRank[] = ['A', 'K', 'Q', 'J'];
   
   const deck: Card[] = [];
   
+  // Add regular cards (A, K, Q, J of each suit)
   for (const suit of suits) {
     for (const rank of ranks) {
       deck.push({ suit, rank, isFlipped: true });
     }
   }
+  
+  // Add the Joker card
+  deck.push({ suit: 'joker', rank: 'Joker', isFlipped: true });
   
   return shuffleDeck(deck);
 }
@@ -40,50 +44,22 @@ export function dealCards(deck: Card[], count: number): { cards: Card[], remaini
   return { cards, remainingDeck };
 }
 
-// Get card value for hand comparison (Ace high)
+// Get card value for hand comparison
 export function getCardValue(rank: CardRank): number {
   const values: Record<CardRank, number> = {
-    'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10,
-    '9': 9, '8': 8, '7': 7, '6': 6, '5': 5,
-    '4': 4, '3': 3, '2': 2
+    'A': 14, 
+    'K': 13, 
+    'Q': 12, 
+    'J': 11,
+    'Joker': 15  // Joker has highest single card value
   };
   
   return values[rank];
 }
 
-// Check if a hand is a flush (all same suit)
-export function isFlush(hand: Hand): boolean {
-  const firstSuit = hand[0].suit;
-  return hand.every(card => card.suit === firstSuit);
-}
-
-// Check if a hand is a straight (consecutive ranks)
-export function isStraight(hand: Hand): boolean {
-  // Sort cards by rank
-  const sortedHand = [...hand].sort((a, b) => getCardValue(a.rank) - getCardValue(b.rank));
-  
-  // Check for special case: A-2-3-4-5 straight
-  if (
-    sortedHand[0].rank === '2' && 
-    sortedHand[1].rank === '3' && 
-    sortedHand[2].rank === '4' && 
-    sortedHand[3].rank === '5' && 
-    sortedHand[4].rank === 'A'
-  ) {
-    return true;
-  }
-  
-  // Check normal straight
-  for (let i = 1; i < sortedHand.length; i++) {
-    const prevValue = getCardValue(sortedHand[i-1].rank);
-    const currValue = getCardValue(sortedHand[i].rank);
-    
-    if (currValue !== prevValue + 1) {
-      return false;
-    }
-  }
-  
-  return true;
+// Find Joker card in hand
+export function findJoker(hand: Hand): Card | undefined {
+  return hand.find(card => card.rank === 'Joker');
 }
 
 // Get pairs, three of a kind, four of a kind, etc.
@@ -91,6 +67,9 @@ export function getCardGroups(hand: Hand): Map<CardRank, Card[]> {
   const groups = new Map<CardRank, Card[]>();
   
   for (const card of hand) {
+    // Skip joker for now, we'll handle it separately
+    if (card.rank === 'Joker') continue;
+    
     if (!groups.has(card.rank)) {
       groups.set(card.rank, []);
     }
@@ -101,75 +80,72 @@ export function getCardGroups(hand: Hand): Map<CardRank, Card[]> {
 }
 
 // Determine hand rank for comparison
-export function getHandRank(hand: Hand): { rank: number, name: string } {
+export function getHandRank(hand: Hand): { rank: number, name: PokerHandRanking } {
   if (hand.length !== 5) {
     throw new Error('Hand must contain exactly 5 cards');
   }
   
-  const isHandFlush = isFlush(hand);
-  const isHandStraight = isStraight(hand);
+  const hasJoker = hand.some(card => card.rank === 'Joker');
   const groups = getCardGroups(hand);
   
-  // Royal flush
-  if (isHandFlush && isHandStraight) {
-    const hasAce = hand.some(card => card.rank === 'A');
-    const hasKing = hand.some(card => card.rank === 'K');
-    if (hasAce && hasKing) {
-      return { rank: 10, name: 'Royal Flush' };
-    }
-    // Straight flush
-    return { rank: 9, name: 'Straight Flush' };
+  // Sort groups by size (largest first) for easier hand detection
+  const sortedGroups = [...groups.entries()]
+    .sort((a, b) => b[1].length - a[1].length);
+  
+  // Five of a Kind (only possible with Joker)
+  if (hasJoker && sortedGroups.length > 0 && sortedGroups[0][1].length === 4) {
+    return { rank: HAND_RANKINGS['Five of a Kind'], name: 'Five of a Kind' };
   }
   
-  // Four of a kind
-  for (const [rank, cards] of groups.entries()) {
-    if (cards.length === 4) {
-      return { rank: 8, name: 'Four of a Kind' };
-    }
+  // Four of a Kind
+  if (sortedGroups.length > 0 && sortedGroups[0][1].length === 4) {
+    return { rank: HAND_RANKINGS['Four of a Kind'], name: 'Four of a Kind' };
   }
   
-  // Full house (three of a kind + pair)
-  let hasThreeOfAKind = false;
-  let hasPair = false;
-  for (const [rank, cards] of groups.entries()) {
-    if (cards.length === 3) hasThreeOfAKind = true;
-    if (cards.length === 2) hasPair = true;
-  }
-  if (hasThreeOfAKind && hasPair) {
-    return { rank: 7, name: 'Full House' };
+  if (hasJoker && sortedGroups.length > 0 && sortedGroups[0][1].length === 3) {
+    return { rank: HAND_RANKINGS['Four of a Kind'], name: 'Four of a Kind' };
   }
   
-  // Flush
-  if (isHandFlush) {
-    return { rank: 6, name: 'Flush' };
+  // Full House
+  if (sortedGroups.length >= 2 && sortedGroups[0][1].length === 3 && sortedGroups[1][1].length === 2) {
+    return { rank: HAND_RANKINGS['Full House'], name: 'Full House' };
   }
   
-  // Straight
-  if (isHandStraight) {
-    return { rank: 5, name: 'Straight' };
+  if (hasJoker && sortedGroups.length >= 2 && 
+      ((sortedGroups[0][1].length === 2 && sortedGroups[1][1].length === 2) || 
+       sortedGroups[0][1].length === 3)) {
+    return { rank: HAND_RANKINGS['Full House'], name: 'Full House' };
   }
   
-  // Three of a kind
-  if (hasThreeOfAKind) {
-    return { rank: 4, name: 'Three of a Kind' };
+  // Three of a Kind
+  if (sortedGroups.length > 0 && sortedGroups[0][1].length === 3) {
+    return { rank: HAND_RANKINGS['Three of a Kind'], name: 'Three of a Kind' };
   }
   
-  // Two pair
-  let pairCount = 0;
-  for (const [rank, cards] of groups.entries()) {
-    if (cards.length === 2) pairCount++;
-  }
-  if (pairCount === 2) {
-    return { rank: 3, name: 'Two Pair' };
+  if (hasJoker && sortedGroups.length > 0 && sortedGroups[0][1].length === 2) {
+    return { rank: HAND_RANKINGS['Three of a Kind'], name: 'Three of a Kind' };
   }
   
-  // One pair
-  if (pairCount === 1) {
-    return { rank: 2, name: 'One Pair' };
+  // Two Pair
+  if (sortedGroups.length >= 2 && sortedGroups[0][1].length === 2 && sortedGroups[1][1].length === 2) {
+    return { rank: HAND_RANKINGS['Two Pair'], name: 'Two Pair' };
   }
   
-  // High card
-  return { rank: 1, name: 'High Card' };
+  if (hasJoker && sortedGroups.length >= 2 && sortedGroups[0][1].length === 2 && sortedGroups[1][1].length === 1) {
+    return { rank: HAND_RANKINGS['Two Pair'], name: 'Two Pair' };
+  }
+  
+  // One Pair
+  if (sortedGroups.length > 0 && sortedGroups[0][1].length === 2) {
+    return { rank: HAND_RANKINGS['One Pair'], name: 'One Pair' };
+  }
+  
+  if (hasJoker) {
+    return { rank: HAND_RANKINGS['One Pair'], name: 'One Pair' };
+  }
+  
+  // High Card
+  return { rank: HAND_RANKINGS['High Card'], name: 'High Card' };
 }
 
 // Compare two hands and determine the winner
@@ -278,58 +254,76 @@ export function getAICardSwapIndices(hand: Hand, difficulty: string): number[] {
   const handRank = getHandRank(hand);
   const indices: number[] = [];
   
-  // High ranked hands - don't swap anything
-  if (handRank.rank >= 6) {
-    return [];
-  }
-  
-  const groups = getCardGroups(hand);
-  const pairs: CardRank[] = [];
-  const singles: CardRank[] = [];
-  
-  for (const [rank, cards] of groups.entries()) {
-    if (cards.length >= 2) {
-      pairs.push(rank);
-    } else {
-      singles.push(rank);
-    }
-  }
-  
-  // Three of a kind - keep the three, swap the other two
-  if (handRank.rank === 4) {
-    for (let i = 0; i < hand.length; i++) {
-      const cardRank = hand[i].rank;
-      if (!pairs.includes(cardRank)) {
-        indices.push(i);
+  // Keep Joker card
+  const jokerIndex = hand.findIndex(card => card.rank === 'Joker');
+  if (jokerIndex !== -1) {
+    // Don't swap Joker
+  } else {
+    // For 17 Poker, the strategy is similar but uses different hand rankings
+    const groups = getCardGroups(hand);
+    
+    // Four of a Kind - keep all four cards, swap the other
+    if (handRank.name === 'Four of a Kind') {
+      for (let i = 0; i < hand.length; i++) {
+        const cardRank = hand[i].rank;
+        if (cardRank !== 'Joker') {
+          const group = groups.get(cardRank);
+          if (group && group.length < 4) {
+            indices.push(i);
+          }
+        }
       }
+      return indices;
     }
-    return indices;
-  }
-  
-  // Two pair - keep both pairs, swap the other card
-  if (handRank.rank === 3) {
-    for (let i = 0; i < hand.length; i++) {
-      const cardRank = hand[i].rank;
-      if (!pairs.includes(cardRank)) {
-        indices.push(i);
+    
+    // Full House - keep all cards, don't swap
+    if (handRank.name === 'Full House') {
+      return [];
+    }
+    
+    // Three of a Kind - keep the three cards, swap the other two
+    if (handRank.name === 'Three of a Kind') {
+      for (let i = 0; i < hand.length; i++) {
+        const cardRank = hand[i].rank;
+        if (cardRank !== 'Joker') {
+          const group = groups.get(cardRank);
+          if (group && group.length < 3) {
+            indices.push(i);
+          }
+        }
       }
+      return indices;
     }
-    return indices;
-  }
-  
-  // One pair - keep the pair, swap the other three
-  if (handRank.rank === 2) {
-    for (let i = 0; i < hand.length; i++) {
-      const cardRank = hand[i].rank;
-      if (!pairs.includes(cardRank)) {
-        indices.push(i);
+    
+    // Two Pair - keep both pairs, swap the other card
+    if (handRank.name === 'Two Pair') {
+      for (let i = 0; i < hand.length; i++) {
+        const cardRank = hand[i].rank;
+        if (cardRank !== 'Joker') {
+          const group = groups.get(cardRank);
+          if (group && group.length < 2) {
+            indices.push(i);
+          }
+        }
       }
+      return indices;
     }
-    return indices;
-  }
-  
-  // High card - keep the highest 2 cards, swap the rest
-  if (handRank.rank === 1) {
+    
+    // One Pair - keep the pair, swap the other three
+    if (handRank.name === 'One Pair') {
+      for (let i = 0; i < hand.length; i++) {
+        const cardRank = hand[i].rank;
+        if (cardRank !== 'Joker') {
+          const group = groups.get(cardRank);
+          if (group && group.length < 2) {
+            indices.push(i);
+          }
+        }
+      }
+      return indices;
+    }
+    
+    // High Card - keep the highest 2 cards, swap the rest
     const sortedIndices = [...hand.keys()].sort((a, b) => 
       getCardValue(hand[b].rank) - getCardValue(hand[a].rank)
     );

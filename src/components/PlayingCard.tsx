@@ -92,6 +92,8 @@ const PlayingCard = ({
         return { symbol: '♣', color: 'text-white' };
       case 'spades':
         return { symbol: '♠', color: 'text-white' };
+      case 'joker':
+        return { symbol: '★', color: 'text-amber-400' };
       default:
         return { symbol: '', color: '' };
     }
@@ -134,28 +136,43 @@ const PlayingCard = ({
         </motion.div>
         
         <motion.div
-          className="absolute w-full h-full backface-hidden bg-white rounded-lg p-2 flex flex-col justify-between"
+          className={cn(
+            "absolute w-full h-full backface-hidden rounded-lg p-2 flex flex-col justify-between",
+            card.rank === 'Joker' ? "bg-gradient-to-br from-zinc-900 to-black" : "bg-white"
+          )}
           initial={{ rotateY: 180 }}
           animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
           style={{ backfaceVisibility: 'hidden' }}
         >
           {/* Card Front */}
-          <div className={cn("text-xl font-bold", color)}>
-            <div className="flex flex-col items-start">
-              <span>{card.rank}</span>
-              <span className="text-lg">{symbol}</span>
+          {card.rank === 'Joker' ? (
+            // Joker Card
+            <div className="h-full flex flex-col items-center justify-between py-2">
+              <div className="text-xl font-bold text-amber-400">JOKER</div>
+              <div className="text-5xl text-amber-400 flex-grow flex items-center justify-center">★</div>
+              <div className="text-xl font-bold text-amber-400 rotate-180">JOKER</div>
             </div>
-          </div>
-          <div className={cn("text-4xl flex-grow flex items-center justify-center", color)}>
-            {symbol}
-          </div>
-          <div className={cn("text-xl font-bold rotate-180", color)}>
-            <div className="flex flex-col items-start">
-              <span>{card.rank}</span>
-              <span className="text-lg">{symbol}</span>
-            </div>
-          </div>
+          ) : (
+            // Normal Card
+            <>
+              <div className={cn("text-xl font-bold", color)}>
+                <div className="flex flex-col items-start">
+                  <span>{card.rank}</span>
+                  <span className="text-lg">{symbol}</span>
+                </div>
+              </div>
+              <div className={cn("text-4xl flex-grow flex items-center justify-center", color)}>
+                {symbol}
+              </div>
+              <div className={cn("text-xl font-bold rotate-180", color)}>
+                <div className="flex flex-col items-start">
+                  <span>{card.rank}</span>
+                  <span className="text-lg">{symbol}</span>
+                </div>
+              </div>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </div>

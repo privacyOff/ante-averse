@@ -1,6 +1,6 @@
 
-export type CardSuit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
-export type CardRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
+export type CardSuit = 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker';
+export type CardRank = 'A' | 'K' | 'Q' | 'J' | 'Joker';
 
 export interface Card {
   suit: CardSuit;
@@ -45,3 +45,22 @@ export type GamePhase =
   | 'gameOver';
 
 export type BetAction = 'fold' | 'call' | 'raise';
+
+export type PokerHandRanking = 
+  | 'Five of a Kind'
+  | 'Four of a Kind'
+  | 'Full House'
+  | 'Three of a Kind'
+  | 'Two Pair'
+  | 'One Pair'
+  | 'High Card';
+
+export const HAND_RANKINGS: Record<PokerHandRanking, number> = {
+  'Five of a Kind': 6,
+  'Four of a Kind': 5,
+  'Full House': 4,
+  'Three of a Kind': 3,
+  'Two Pair': 2,
+  'One Pair': 1,
+  'High Card': 0
+};
