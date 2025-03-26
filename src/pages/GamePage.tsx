@@ -103,17 +103,21 @@ const GamePage = () => {
   };
   
   const handleCutDeck = () => {
+    console.log("handleCutDeck called with cutAmount:", cutAmount);
+    
     if (cutAmount < 1 || cutAmount > 10) {
       toast.error("Cut amount must be between 1 and 10");
       return;
     }
     
     let deckAfterCut = [...gameState.deck];
+    console.log("Initial deck length:", deckAfterCut.length);
     
     if (gameState.currentRound === 1 || gameState.lastRoundWinner === 'player') {
       const topCards = deckAfterCut.slice(0, cutAmount);
       const remainingCards = deckAfterCut.slice(cutAmount);
       deckAfterCut = [...remainingCards, ...topCards];
+      console.log("After player cut, deck length:", deckAfterCut.length);
       
       setPlayerMessage(`Cut ${cutAmount} cards`);
       
@@ -121,6 +125,7 @@ const GamePage = () => {
       const aiTopCards = deckAfterCut.slice(0, aiCutAmount);
       const aiRemainingCards = deckAfterCut.slice(aiCutAmount);
       deckAfterCut = [...aiRemainingCards, ...aiTopCards];
+      console.log("After AI cut, deck length:", deckAfterCut.length);
       
       setOpponentMessage(`Cut ${aiCutAmount} cards`);
     } else {
@@ -128,18 +133,26 @@ const GamePage = () => {
       const aiTopCards = deckAfterCut.slice(0, aiCutAmount);
       const aiRemainingCards = deckAfterCut.slice(aiCutAmount);
       deckAfterCut = [...aiRemainingCards, ...aiTopCards];
+      console.log("After AI cut, deck length:", deckAfterCut.length);
       
       setOpponentMessage(`Cut ${aiCutAmount} cards`);
       
       const topCards = deckAfterCut.slice(0, cutAmount);
       const remainingCards = deckAfterCut.slice(cutAmount);
       deckAfterCut = [...remainingCards, ...topCards];
+      console.log("After player cut, deck length:", deckAfterCut.length);
       
       setPlayerMessage(`Cut ${cutAmount} cards`);
     }
     
+    console.log("Dealing cards from deck of length:", deckAfterCut.length);
     const { cards: playerCards, remainingDeck: deck1 } = dealCards(deckAfterCut, 5);
+    console.log("Player cards dealt:", playerCards.length);
+    console.log("Remaining deck length after player cards:", deck1.length);
+    
     const { cards: opponentCards, remainingDeck: deck2 } = dealCards(deck1, 5);
+    console.log("Opponent cards dealt:", opponentCards.length);
+    console.log("Final remaining deck length:", deck2.length);
     
     setGameState(prev => ({
       ...prev,
@@ -150,6 +163,8 @@ const GamePage = () => {
       playerTurn: gameState.currentRound === 1 || gameState.lastRoundWinner === 'player',
       cutDeckAmount: cutAmount
     }));
+    
+    toast.success("Deck cut successfully! Moving to betting phase...");
     
     if (!(gameState.currentRound === 1 || gameState.lastRoundWinner === 'player')) {
       setTimeout(() => {

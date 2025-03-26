@@ -62,11 +62,14 @@ const GameControls = ({
   
   const handleCutDeck = () => {
     console.log("Cut deck button clicked, function exists:", !!onCutDeck);
+    console.log("Current cut amount:", localCutAmount);
+    
     if (onCutDeck) {
-      toast.success("Cutting deck...");
+      toast.success(`Cutting deck by ${localCutAmount} cards...`);
       onCutDeck();
     } else {
       toast.error("Cut deck function not available");
+      console.error("onCutDeck function is not defined");
     }
   };
   
@@ -151,9 +154,10 @@ const GameControls = ({
           <motion.div variants={item}>
             <Button 
               onClick={handleCutDeck}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold relative shine-effect"
             >
               Cut the Deck
+              <div className="button-shine"></div>
             </Button>
           </motion.div>
         </motion.div>
