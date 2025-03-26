@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -46,14 +45,17 @@ const GameControls = ({
   const [localCutAmount, setLocalCutAmount] = useState(cutAmount);
   
   const handleAnte = () => {
+    console.log("Ante button clicked");
     if (onAnte) onAnte();
   };
   
   const handleCutDeck = () => {
+    console.log("Cut deck button clicked");
     if (onCutDeck) onCutDeck();
   };
   
   const handleBetAction = (action: BetAction) => {
+    console.log(`Bet action: ${action}`);
     if (onBetAction) {
       if (action === 'raise') {
         onBetAction(action, betAmount);
@@ -67,6 +69,8 @@ const GameControls = ({
     setLocalCutAmount(value[0]);
     if (onCutAmountChange) onCutAmountChange(value[0]);
   };
+  
+  console.log("Current game phase:", gamePhase);
   
   const container = {
     hidden: { opacity: 0, y: 20 },
