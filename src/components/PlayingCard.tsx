@@ -89,9 +89,9 @@ const PlayingCard = ({
       case 'diamonds':
         return { symbol: '♦', color: 'text-red-500' };
       case 'clubs':
-        return { symbol: '♣', color: 'text-white' };
+        return { symbol: '♣', color: 'text-zinc-900' };
       case 'spades':
-        return { symbol: '♠', color: 'text-white' };
+        return { symbol: '♠', color: 'text-zinc-900' };
       case 'joker':
         return { symbol: '★', color: 'text-amber-400' };
       default:
@@ -106,6 +106,9 @@ const PlayingCard = ({
       onSelect();
     }
   };
+  
+  // Format rank display for rendering
+  const displayRank = card.rank === 'Joker' ? 'JOKER' : card.rank;
   
   return (
     <div className={cn("relative preserve-3d", className)}>
@@ -158,7 +161,7 @@ const PlayingCard = ({
             <>
               <div className={cn("text-xl font-bold", color)}>
                 <div className="flex flex-col items-start">
-                  <span>{card.rank}</span>
+                  <span>{displayRank}</span>
                   <span className="text-lg">{symbol}</span>
                 </div>
               </div>
@@ -167,7 +170,7 @@ const PlayingCard = ({
               </div>
               <div className={cn("text-xl font-bold rotate-180", color)}>
                 <div className="flex flex-col items-start">
-                  <span>{card.rank}</span>
+                  <span>{displayRank}</span>
                   <span className="text-lg">{symbol}</span>
                 </div>
               </div>

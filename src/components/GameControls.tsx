@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -45,9 +46,17 @@ const GameControls = ({
   const [betAmount, setBetAmount] = useState(minRaise);
   const [localCutAmount, setLocalCutAmount] = useState(cutAmount);
   
+  // Reset betAmount when minRaise changes
+  useEffect(() => {
+    setBetAmount(minRaise);
+  }, [minRaise]);
+  
   useEffect(() => {
     console.log("GameControls: Game phase changed to:", gamePhase);
-  }, [gamePhase]);
+    console.log("GameControls: Selected cards:", selectedCards);
+    console.log("GameControls: Current bet:", currentBet);
+    console.log("GameControls: Min/Max raise:", minRaise, maxRaise);
+  }, [gamePhase, selectedCards, currentBet, minRaise, maxRaise]);
   
   const handleAnte = () => {
     console.log("Ante button clicked, function exists:", !!onAnte);
@@ -75,6 +84,8 @@ const GameControls = ({
   
   const handleBetAction = (action: BetAction) => {
     console.log(`Bet action: ${action}, function exists:`, !!onBetAction);
+    console.log(`Current bet amount: ${betAmount}, current bet: ${currentBet}`);
+    
     if (onBetAction) {
       if (action === 'raise') {
         toast.success(`Raising ${betAmount} chips`);
@@ -85,12 +96,40 @@ const GameControls = ({
       }
     } else {
       toast.error("Bet action function not available");
+      console.error("onBetAction function is not defined");
+    }
+  };
+  
+  const handleSwapCards = () => {
+    console.log("Swap cards button clicked, function exists:", !!onSwapCards);
+    console.log("Selected cards:", selectedCards);
+    
+    if (onSwapCards) {
+      toast.success(selectedCards.length > 0 
+        ? `Swapping ${selectedCards.length} card${selectedCards.length > 1 ? 's' : ''}` 
+        : "Keeping all cards");
+      onSwapCards();
+    } else {
+      toast.error("Swap cards function not available");
+      console.error("onSwapCards function is not defined");
     }
   };
   
   const handleCutAmountChange = (value: number[]) => {
     setLocalCutAmount(value[0]);
     if (onCutAmountChange) onCutAmountChange(value[0]);
+  };
+  
+  const handlePlayAgain = () => {
+    console.log("Play again button clicked, function exists:", !!onPlayAgain);
+    
+    if (onPlayAgain) {
+      toast.success(gamePhase === 'gameOver' ? "Starting new game..." : "Moving to next round...");
+      onPlayAgain();
+    } else {
+      toast.error("Play again function not available");
+      console.error("onPlayAgain function is not defined");
+    }
   };
   
   console.log("Current game phase:", gamePhase);
