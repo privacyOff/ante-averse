@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { motion } from 'framer-motion';
 import { BetAction, GamePhase } from '@/types/poker';
+import { toast } from 'sonner';
 
 interface GameControlsProps {
   gamePhase: GamePhase;
@@ -44,24 +45,43 @@ const GameControls = ({
   const [betAmount, setBetAmount] = useState(minRaise);
   const [localCutAmount, setLocalCutAmount] = useState(cutAmount);
   
+  useEffect(() => {
+    console.log("GameControls: Game phase changed to:", gamePhase);
+  }, [gamePhase]);
+  
   const handleAnte = () => {
-    console.log("Ante button clicked");
-    if (onAnte) onAnte();
+    console.log("Ante button clicked, function exists:", !!onAnte);
+    if (onAnte) {
+      toast.success("Placing ante...");
+      onAnte();
+    } else {
+      toast.error("Ante function not available");
+      console.error("onAnte function is not defined");
+    }
   };
   
   const handleCutDeck = () => {
-    console.log("Cut deck button clicked");
-    if (onCutDeck) onCutDeck();
+    console.log("Cut deck button clicked, function exists:", !!onCutDeck);
+    if (onCutDeck) {
+      toast.success("Cutting deck...");
+      onCutDeck();
+    } else {
+      toast.error("Cut deck function not available");
+    }
   };
   
   const handleBetAction = (action: BetAction) => {
-    console.log(`Bet action: ${action}`);
+    console.log(`Bet action: ${action}, function exists:`, !!onBetAction);
     if (onBetAction) {
       if (action === 'raise') {
+        toast.success(`Raising ${betAmount} chips`);
         onBetAction(action, betAmount);
       } else {
+        toast.success(action === 'fold' ? "Folding" : action === 'call' ? (currentBet > 0 ? "Calling" : "Checking") : "");
         onBetAction(action);
       }
+    } else {
+      toast.error("Bet action function not available");
     }
   };
   
@@ -71,6 +91,8 @@ const GameControls = ({
   };
   
   console.log("Current game phase:", gamePhase);
+  console.log("Player chips:", playerChips);
+  console.log("Ante amount:", anteAmount);
   
   const container = {
     hidden: { opacity: 0, y: 20 },
@@ -99,10 +121,15 @@ const GameControls = ({
         <motion.div variants={item}>
           <Button 
             onClick={handleAnte}
-            className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold"
+            className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold relative shine-effect"
+            disabled={playerChips < anteAmount}
           >
             Place Ante ({anteAmount} chips)
+            <div className="button-shine"></div>
           </Button>
+          {playerChips < anteAmount && (
+            <p className="text-red-500 text-center mt-2">Not enough chips! Visit the shop to buy more.</p>
+          )}
         </motion.div>
       )}
       
