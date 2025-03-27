@@ -56,7 +56,8 @@ const GameControls = ({
     console.log("GameControls: Selected cards:", selectedCards);
     console.log("GameControls: Current bet:", currentBet);
     console.log("GameControls: Min/Max raise:", minRaise, maxRaise);
-  }, [gamePhase, selectedCards, currentBet, minRaise, maxRaise]);
+    console.log("GameControls: onBetAction available:", !!onBetAction);
+  }, [gamePhase, selectedCards, currentBet, minRaise, maxRaise, onBetAction]);
   
   const handleAnte = () => {
     console.log("Ante button clicked, function exists:", !!onAnte);
@@ -86,7 +87,13 @@ const GameControls = ({
     console.log(`Bet action: ${action}, function exists:`, !!onBetAction);
     console.log(`Current bet amount: ${betAmount}, current bet: ${currentBet}`);
     
-    if (onBetAction) {
+    if (!onBetAction) {
+      toast.error("Bet action function not available");
+      console.error("onBetAction function is not defined");
+      return;
+    }
+    
+    try {
       if (action === 'raise') {
         console.log("Executing RAISE action with amount:", betAmount);
         toast.success(`Raising ${betAmount} chips`);
@@ -101,10 +108,11 @@ const GameControls = ({
         onBetAction(action);
       } else {
         console.error("Unknown bet action:", action);
+        toast.error("Unknown bet action");
       }
-    } else {
-      toast.error("Bet action function not available");
-      console.error("onBetAction function is not defined");
+    } catch (error) {
+      console.error("Error executing bet action:", error);
+      toast.error("Failed to execute bet action");
     }
   };
   

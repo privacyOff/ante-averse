@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -217,12 +218,12 @@ const GamePage = () => {
       }
       
       newGameState.playerTurn = false;
-      newGameState.currentBet = 0;
+      newGameState.currentBet = 0; // Reset the current bet after a call
     }
     else if (action === 'raise' && amount) {
       console.log(`Player raised by ${amount}`);
-      const minBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount : gameState.anteAmount * 2;
-      const maxBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6;
+      const minBet = newGameState.gamePhase === 'firstBet' ? newGameState.anteAmount : newGameState.anteAmount * 2;
+      const maxBet = newGameState.gamePhase === 'firstBet' ? newGameState.anteAmount * 3 : newGameState.anteAmount * 6;
       
       if (amount < minBet) {
         toast.error(`Minimum bet is ${minBet} chips!`);
@@ -248,20 +249,21 @@ const GamePage = () => {
     
     console.log("After bet action, checking for phase transition...");
     
-    if (newGameState.gamePhase === 'firstBet' && !newGameState.playerTurn && !newGameState.winner) {
+    // Check for phase transitions
+    if ((newGameState.gamePhase === 'firstBet' || newGameState.gamePhase === 'secondBet') && 
+        !newGameState.playerTurn && !newGameState.winner) {
+      
       if (newGameState.currentBet === 0) {
-        console.log("First betting round complete with no pending bets, moving to swap phase");
-        newGameState.gamePhase = 'swap';
-        newGameState.playerTurn = true;
-      }
-    }
-    
-    if (newGameState.gamePhase === 'secondBet' && !newGameState.playerTurn && !newGameState.winner) {
-      if (newGameState.currentBet === 0) {
-        console.log("Second betting round complete with no pending bets, moving to showdown");
-        newGameState.gamePhase = 'showdown';
-        handleShowdown(newGameState);
-        return;
+        if (newGameState.gamePhase === 'firstBet') {
+          console.log("First betting round complete with no pending bets, moving to swap phase");
+          newGameState.gamePhase = 'swap';
+          newGameState.playerTurn = true;
+        } else if (newGameState.gamePhase === 'secondBet') {
+          console.log("Second betting round complete with no pending bets, moving to showdown");
+          newGameState.gamePhase = 'showdown';
+          handleShowdown(newGameState);
+          return;
+        }
       }
     }
     
