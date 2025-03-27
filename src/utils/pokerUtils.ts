@@ -1,3 +1,4 @@
+
 import { Card, CardRank, CardSuit, Hand, HAND_RANKINGS, PokerHandRanking } from '@/types/poker';
 
 // Create a 17-card deck for 17 Poker
@@ -48,9 +49,18 @@ export function dealCards(deck: Card[], count: number): { cards: Card[], remaini
 export function getCardValue(rank: CardRank): number {
   const values: Record<CardRank, number> = {
     'A': 14, 
-    'K': 13, 
-    'Q': 12, 
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    '10': 10,
     'J': 11,
+    'Q': 12, 
+    'K': 13, 
     'Joker': 15  // Joker has highest single card value
   };
   
