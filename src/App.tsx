@@ -19,7 +19,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         /* Shine effect for buttons */
         .shine-effect {
           overflow: hidden;
@@ -56,7 +56,7 @@ const App = () => (
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
         }
-      `}</style>
+      ` }} />
       <Toaster />
       <Sonner />
       <BrowserRouter>
