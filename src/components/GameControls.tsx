@@ -1,10 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { motion } from 'framer-motion';
 import { BetAction, GamePhase } from '@/types/poker';
-import { toast } from 'sonner';
+import AnteButton from './game/AnteButton';
+import CutDeckControl from './game/CutDeckControl';
+import ActionButtons from './game/ActionButtons';
+import BetSlider from './game/BetSlider';
+import SwapButton from './game/SwapButton';
+import PlayAgainButton from './game/PlayAgainButton';
 
 interface GameControlsProps {
   gamePhase: GamePhase;
@@ -44,12 +47,6 @@ const GameControls = ({
   className
 }: GameControlsProps) => {
   const [betAmount, setBetAmount] = useState(minRaise);
-  const [localCutAmount, setLocalCutAmount] = useState(cutAmount);
-  
-  // Reset betAmount when minRaise changes
-  useEffect(() => {
-    setBetAmount(minRaise);
-  }, [minRaise]);
   
   useEffect(() => {
     console.log("GameControls: Game phase changed to:", gamePhase);
@@ -58,99 +55,6 @@ const GameControls = ({
     console.log("GameControls: Min/Max raise:", minRaise, maxRaise);
     console.log("GameControls: onBetAction available:", !!onBetAction);
   }, [gamePhase, selectedCards, currentBet, minRaise, maxRaise, onBetAction]);
-  
-  const handleAnte = () => {
-    console.log("Ante button clicked, function exists:", !!onAnte);
-    if (onAnte) {
-      toast.success("Placing ante...");
-      onAnte();
-    } else {
-      toast.error("Ante function not available");
-      console.error("onAnte function is not defined");
-    }
-  };
-  
-  const handleCutDeck = () => {
-    console.log("Cut deck button clicked, function exists:", !!onCutDeck);
-    console.log("Current cut amount:", localCutAmount);
-    
-    if (onCutDeck) {
-      toast.success(`Cutting deck by ${localCutAmount} cards...`);
-      onCutDeck();
-    } else {
-      toast.error("Cut deck function not available");
-      console.error("onCutDeck function is not defined");
-    }
-  };
-  
-  const handleBetAction = (action: BetAction) => {
-    console.log(`Bet action: ${action}, function exists:`, !!onBetAction);
-    console.log(`Current bet amount: ${betAmount}, current bet: ${currentBet}`);
-    
-    if (!onBetAction) {
-      toast.error("Bet action function not available");
-      console.error("onBetAction function is not defined");
-      return;
-    }
-    
-    try {
-      if (action === 'raise') {
-        console.log("Executing RAISE action with amount:", betAmount);
-        toast.success(`Raising ${betAmount} chips`);
-        onBetAction(action, betAmount);
-      } else if (action === 'call') {
-        console.log("Executing CALL action");
-        toast.success(currentBet > 0 ? "Calling" : "Checking");
-        onBetAction(action);
-      } else if (action === 'fold') {
-        console.log("Executing FOLD action");
-        toast.success("Folding");
-        onBetAction(action);
-      } else {
-        console.error("Unknown bet action:", action);
-        toast.error("Unknown bet action");
-      }
-    } catch (error) {
-      console.error("Error executing bet action:", error);
-      toast.error("Failed to execute bet action");
-    }
-  };
-  
-  const handleSwapCards = () => {
-    console.log("Swap cards button clicked, function exists:", !!onSwapCards);
-    console.log("Selected cards:", selectedCards);
-    
-    if (onSwapCards) {
-      toast.success(selectedCards.length > 0 
-        ? `Swapping ${selectedCards.length} card${selectedCards.length > 1 ? 's' : ''}` 
-        : "Keeping all cards");
-      onSwapCards();
-    } else {
-      toast.error("Swap cards function not available");
-      console.error("onSwapCards function is not defined");
-    }
-  };
-  
-  const handleCutAmountChange = (value: number[]) => {
-    setLocalCutAmount(value[0]);
-    if (onCutAmountChange) onCutAmountChange(value[0]);
-  };
-  
-  const handlePlayAgain = () => {
-    console.log("Play again button clicked, function exists:", !!onPlayAgain);
-    
-    if (onPlayAgain) {
-      toast.success(gamePhase === 'gameOver' ? "Starting new game..." : "Moving to next round...");
-      onPlayAgain();
-    } else {
-      toast.error("Play again function not available");
-      console.error("onPlayAgain function is not defined");
-    }
-  };
-  
-  console.log("Current game phase:", gamePhase);
-  console.log("Player chips:", playerChips);
-  console.log("Ante amount:", anteAmount);
   
   const container = {
     hidden: { opacity: 0, y: 20 },
@@ -177,46 +81,21 @@ const GameControls = ({
     >
       {gamePhase === 'start' && (
         <motion.div variants={item}>
-          <Button 
-            onClick={handleAnte}
-            className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold relative shine-effect"
-            disabled={playerChips < anteAmount}
-            type="button"
-          >
-            Place Ante ({anteAmount} chips)
-            <div className="button-shine"></div>
-          </Button>
-          {playerChips < anteAmount && (
-            <p className="text-red-500 text-center mt-2">Not enough chips! Visit the shop to buy more.</p>
-          )}
+          <AnteButton 
+            onAnte={onAnte}
+            anteAmount={anteAmount}
+            playerChips={playerChips}
+          />
         </motion.div>
       )}
       
       {gamePhase === 'cutDeck' && (
         <motion.div variants={container} className="space-y-4">
-          <motion.div variants={item} className="flex items-center gap-4 text-sm">
-            <span className="text-white/60">Cards to cut:</span>
-            <Slider
-              value={[localCutAmount]}
-              min={1}
-              max={10}
-              step={1}
-              onValueChange={handleCutAmountChange}
-              className="flex-1"
-            />
-            <span className="text-white/60 min-w-[20px] text-center">{localCutAmount}</span>
-          </motion.div>
-          
-          <motion.div variants={item}>
-            <Button 
-              onClick={handleCutDeck}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold relative shine-effect"
-              type="button"
-            >
-              Cut the Deck
-              <div className="button-shine"></div>
-            </Button>
-          </motion.div>
+          <CutDeckControl 
+            onCutDeck={onCutDeck}
+            cutAmount={cutAmount ?? 3}
+            onCutAmountChange={onCutAmountChange}
+          />
         </motion.div>
       )}
       
@@ -225,70 +104,44 @@ const GameControls = ({
           variants={container}
           className="grid grid-cols-1 gap-4"
         >
-          <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button 
-              onClick={() => handleBetAction('fold')}
-              className="bg-zinc-800 hover:bg-zinc-700 text-white"
-              type="button"
-            >
-              Fold
-            </Button>
-            
-            <Button 
-              onClick={() => handleBetAction('call')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              type="button"
-            >
-              {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
-            </Button>
-            
-            <Button 
-              onClick={() => handleBetAction('raise')}
-              className="bg-green-600 hover:bg-green-700 text-white col-span-2 lg:col-span-1"
-              type="button"
-            >
-              Raise ({betAmount})
-            </Button>
+          <motion.div variants={item}>
+            <ActionButtons 
+              onBetAction={onBetAction}
+              currentBet={currentBet}
+              betAmount={betAmount}
+              minRaise={minRaise}
+              maxRaise={maxRaise}
+              playerChips={playerChips}
+            />
           </motion.div>
           
-          <motion.div variants={item} className="flex items-center gap-4 text-sm">
-            <span className="text-white/60 min-w-[40px]">Min: {minRaise}</span>
-            <Slider
-              value={[betAmount]}
-              min={minRaise}
-              max={Math.min(playerChips, maxRaise)}
-              step={5}
-              onValueChange={(value) => setBetAmount(value[0])}
-              className="flex-1"
+          <motion.div variants={item}>
+            <BetSlider 
+              minRaise={minRaise}
+              maxRaise={maxRaise}
+              playerChips={playerChips}
+              onBetAmountChange={setBetAmount}
             />
-            <span className="text-white/60 min-w-[40px]">Max: {Math.min(playerChips, maxRaise)}</span>
           </motion.div>
         </motion.div>
       )}
       
       {gamePhase === 'swap' && (
         <motion.div variants={item}>
-          <Button 
-            onClick={handleSwapCards}
-            className="w-full bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white py-6 text-lg font-bold"
-            type="button"
-          >
-            {selectedCards.length > 0 
-              ? `Swap ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` 
-              : 'Keep All Cards'}
-          </Button>
+          <SwapButton 
+            onSwapCards={onSwapCards}
+            selectedCards={selectedCards}
+          />
         </motion.div>
       )}
       
       {(gamePhase === 'roundOver' || gamePhase === 'gameOver') && (
         <motion.div variants={item}>
-          <Button 
-            onClick={handlePlayAgain}
-            className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold"
-            type="button"
-          >
-            {playAgainLabel}
-          </Button>
+          <PlayAgainButton 
+            onPlayAgain={onPlayAgain}
+            playAgainLabel={playAgainLabel}
+            gamePhase={gamePhase}
+          />
         </motion.div>
       )}
     </motion.div>
