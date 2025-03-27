@@ -88,12 +88,15 @@ const GameControls = ({
     
     if (onBetAction) {
       if (action === 'raise') {
+        console.log("Executing RAISE action with amount:", betAmount);
         toast.success(`Raising ${betAmount} chips`);
         onBetAction(action, betAmount);
       } else if (action === 'call') {
+        console.log("Executing CALL action");
         toast.success(currentBet > 0 ? "Calling" : "Checking");
         onBetAction(action);
       } else if (action === 'fold') {
+        console.log("Executing FOLD action");
         toast.success("Folding");
         onBetAction(action);
       } else {
@@ -170,6 +173,7 @@ const GameControls = ({
             onClick={handleAnte}
             className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold relative shine-effect"
             disabled={playerChips < anteAmount}
+            type="button"
           >
             Place Ante ({anteAmount} chips)
             <div className="button-shine"></div>
@@ -199,6 +203,7 @@ const GameControls = ({
             <Button 
               onClick={handleCutDeck}
               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold relative shine-effect"
+              type="button"
             >
               Cut the Deck
               <div className="button-shine"></div>
@@ -258,6 +263,7 @@ const GameControls = ({
           <Button 
             onClick={handleSwapCards}
             className="w-full bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white py-6 text-lg font-bold"
+            type="button"
           >
             {selectedCards.length > 0 
               ? `Swap ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` 
@@ -271,6 +277,7 @@ const GameControls = ({
           <Button 
             onClick={handlePlayAgain}
             className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold"
+            type="button"
           >
             {playAgainLabel}
           </Button>
