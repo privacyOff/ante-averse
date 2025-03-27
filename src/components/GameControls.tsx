@@ -248,7 +248,7 @@ const GameControls = ({
       {gamePhase === 'swap' && (
         <motion.div variants={item}>
           <Button 
-            onClick={onSwapCards}
+            onClick={handleSwapCards}
             className="w-full bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white py-6 text-lg font-bold"
           >
             {selectedCards.length > 0 
@@ -261,7 +261,7 @@ const GameControls = ({
       {(gamePhase === 'roundOver' || gamePhase === 'gameOver') && (
         <motion.div variants={item}>
           <Button 
-            onClick={onPlayAgain}
+            onClick={handlePlayAgain}
             className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold"
           >
             {playAgainLabel}

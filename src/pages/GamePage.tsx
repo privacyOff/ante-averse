@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -174,11 +175,24 @@ const GamePage = () => {
   };
   
   const handleBetAction = (action: BetAction, amount?: number) => {
-    if (!gameState.playerTurn) return;
+    console.log(`handleBetAction called with action: ${action}, amount: ${amount}`);
+    console.log(`Current gameState:`, {
+      playerTurn: gameState.playerTurn,
+      gamePhase: gameState.gamePhase,
+      playerChips: gameState.playerChips,
+      currentBet: gameState.currentBet,
+      pot: gameState.pot
+    });
+    
+    if (!gameState.playerTurn) {
+      console.log("Not player's turn, ignoring bet action");
+      return;
+    }
     
     let newGameState = { ...gameState };
     
     if (action === 'fold') {
+      console.log("Player folded");
       newGameState.winner = 'opponent';
       newGameState.opponentChips += newGameState.pot;
       newGameState.gamePhase = 'roundOver';
@@ -189,6 +203,7 @@ const GamePage = () => {
     } 
     else if (action === 'call') {
       if (newGameState.currentBet > 0) {
+        console.log(`Player called bet of ${newGameState.currentBet}`);
         if (newGameState.playerChips < newGameState.currentBet) {
           toast.error("Not enough chips to call!");
           return;
@@ -198,6 +213,7 @@ const GamePage = () => {
         newGameState.pot += newGameState.currentBet;
         setPlayerMessage(`Called ${newGameState.currentBet}`);
       } else {
+        console.log("Player checked (no current bet)");
         setPlayerMessage("Checked");
       }
       
@@ -205,6 +221,7 @@ const GamePage = () => {
       newGameState.playerTurn = false;
     }
     else if (action === 'raise' && amount) {
+      console.log(`Player raised by ${amount}`);
       const minBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount : gameState.anteAmount * 2;
       const maxBet = gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6;
       
@@ -230,8 +247,12 @@ const GamePage = () => {
       setPlayerMessage(`Raised ${amount}`);
     }
     
+    console.log("After bet action, checking for phase transition...");
+    console.log(`Current phase: ${newGameState.gamePhase}, playerTurn: ${newGameState.playerTurn}, winner: ${newGameState.winner}`);
+    
     if (newGameState.gamePhase === 'firstBet' && !newGameState.playerTurn && !newGameState.winner) {
       if (newGameState.currentBet === 0) {
+        console.log("First betting round complete with no pending bets, moving to swap phase");
         newGameState.gamePhase = 'swap';
         newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
       }
@@ -239,12 +260,14 @@ const GamePage = () => {
     
     if (newGameState.gamePhase === 'secondBet' && !newGameState.playerTurn && !newGameState.winner) {
       if (newGameState.currentBet === 0) {
+        console.log("Second betting round complete with no pending bets, moving to showdown");
         newGameState.gamePhase = 'showdown';
         handleShowdown(newGameState);
         return;
       }
     }
     
+    console.log("Setting new game state:", newGameState);
     setGameState(newGameState);
     localStorage.setItem('pokerChips', newGameState.playerChips.toString());
     
@@ -252,6 +275,7 @@ const GamePage = () => {
     window.dispatchEvent(event);
     
     if (!newGameState.playerTurn && !newGameState.winner) {
+      console.log("Player turn complete, scheduling opponent turn");
       setTimeout(() => {
         handleOpponentTurn(newGameState.gamePhase);
       }, 2000);
