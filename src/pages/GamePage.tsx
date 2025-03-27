@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -217,8 +216,8 @@ const GamePage = () => {
         setPlayerMessage("Checked");
       }
       
-      newGameState.currentBet = 0;
       newGameState.playerTurn = false;
+      newGameState.currentBet = 0;
     }
     else if (action === 'raise' && amount) {
       console.log(`Player raised by ${amount}`);
@@ -248,13 +247,12 @@ const GamePage = () => {
     }
     
     console.log("After bet action, checking for phase transition...");
-    console.log(`Current phase: ${newGameState.gamePhase}, playerTurn: ${newGameState.playerTurn}, winner: ${newGameState.winner}`);
     
     if (newGameState.gamePhase === 'firstBet' && !newGameState.playerTurn && !newGameState.winner) {
       if (newGameState.currentBet === 0) {
         console.log("First betting round complete with no pending bets, moving to swap phase");
         newGameState.gamePhase = 'swap';
-        newGameState.playerTurn = gameState.currentRound === 1 || gameState.lastRoundWinner === 'player';
+        newGameState.playerTurn = true;
       }
     }
     

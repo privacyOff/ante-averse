@@ -90,9 +90,14 @@ const GameControls = ({
       if (action === 'raise') {
         toast.success(`Raising ${betAmount} chips`);
         onBetAction(action, betAmount);
-      } else {
-        toast.success(action === 'fold' ? "Folding" : action === 'call' ? (currentBet > 0 ? "Calling" : "Checking") : "");
+      } else if (action === 'call') {
+        toast.success(currentBet > 0 ? "Calling" : "Checking");
         onBetAction(action);
+      } else if (action === 'fold') {
+        toast.success("Folding");
+        onBetAction(action);
+      } else {
+        console.error("Unknown bet action:", action);
       }
     } else {
       toast.error("Bet action function not available");
@@ -211,6 +216,7 @@ const GameControls = ({
             <Button 
               onClick={() => handleBetAction('fold')}
               className="bg-zinc-800 hover:bg-zinc-700 text-white"
+              type="button"
             >
               Fold
             </Button>
@@ -218,6 +224,7 @@ const GameControls = ({
             <Button 
               onClick={() => handleBetAction('call')}
               className="bg-blue-600 hover:bg-blue-700 text-white"
+              type="button"
             >
               {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
             </Button>
@@ -225,6 +232,7 @@ const GameControls = ({
             <Button 
               onClick={() => handleBetAction('raise')}
               className="bg-green-600 hover:bg-green-700 text-white col-span-2 lg:col-span-1"
+              type="button"
             >
               Raise ({betAmount})
             </Button>
