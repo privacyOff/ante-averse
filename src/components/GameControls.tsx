@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BetAction, GamePhase } from '@/types/poker';
-import { toast } from 'sonner';
 import AnteButton from './game/AnteButton';
 import CutDeckControl from './game/CutDeckControl';
 import ActionButtons from './game/ActionButtons';
@@ -51,10 +50,11 @@ const GameControls = ({
   
   useEffect(() => {
     console.log("GameControls: Game phase changed to:", gamePhase);
-    console.log("GameControls: onBetAction exists:", !!onBetAction);
+    console.log("GameControls: Selected cards:", selectedCards);
     console.log("GameControls: Current bet:", currentBet);
     console.log("GameControls: Min/Max raise:", minRaise, maxRaise);
-  }, [gamePhase, onBetAction, currentBet, minRaise, maxRaise]);
+    console.log("GameControls: onBetAction available:", !!onBetAction);
+  }, [gamePhase, selectedCards, currentBet, minRaise, maxRaise, onBetAction]);
   
   const container = {
     hidden: { opacity: 0, y: 20 },
@@ -70,16 +70,6 @@ const GameControls = ({
   const item = {
     hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0 }
-  };
-  
-  const handleLocalBetAction = (action: BetAction, amount?: number) => {
-    console.log("GameControls: handleLocalBetAction called with", action, amount);
-    if (onBetAction) {
-      onBetAction(action, amount);
-    } else {
-      console.error("onBetAction function is not defined in GameControls");
-      toast.error("Bet action handler not available");
-    }
   };
   
   return (
@@ -115,22 +105,22 @@ const GameControls = ({
           className="grid grid-cols-1 gap-4"
         >
           <motion.div variants={item}>
-            <BetSlider 
-              minRaise={minRaise}
-              maxRaise={maxRaise}
-              playerChips={playerChips}
-              onBetAmountChange={setBetAmount}
-            />
-          </motion.div>
-          
-          <motion.div variants={item}>
             <ActionButtons 
-              onBetAction={handleLocalBetAction}
+              onBetAction={onBetAction}
               currentBet={currentBet}
               betAmount={betAmount}
               minRaise={minRaise}
               maxRaise={maxRaise}
               playerChips={playerChips}
+            />
+          </motion.div>
+          
+          <motion.div variants={item}>
+            <BetSlider 
+              minRaise={minRaise}
+              maxRaise={maxRaise}
+              playerChips={playerChips}
+              onBetAmountChange={setBetAmount}
             />
           </motion.div>
         </motion.div>
