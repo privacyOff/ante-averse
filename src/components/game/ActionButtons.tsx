@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BetAction } from '@/types/poker';
 import { toast } from 'sonner';
@@ -41,10 +41,31 @@ const ActionButtons = ({
       console.log(`Executing ${action.toUpperCase()} action`);
       
       if (action === 'raise') {
+        // Validate bet amount
+        if (betAmount < minRaise) {
+          toast.error(`Minimum raise is ${minRaise} chips`);
+          return;
+        }
+        
+        if (betAmount > maxRaise) {
+          toast.error(`Maximum raise is ${maxRaise} chips`);
+          return;
+        }
+        
+        if (playerChips < betAmount) {
+          toast.error("Not enough chips to raise");
+          return;
+        }
+        
         console.log(`Raising ${betAmount} chips`);
         onBetAction(action, betAmount);
         toast.success(`Raising ${betAmount} chips`);
       } else if (action === 'call') {
+        if (currentBet > 0 && playerChips < currentBet) {
+          toast.error("Not enough chips to call");
+          return;
+        }
+        
         onBetAction(action);
         toast.success(currentBet > 0 ? "Calling" : "Checking");
       } else if (action === 'fold') {
@@ -71,6 +92,7 @@ const ActionButtons = ({
         onClick={() => handleBetAction('call')}
         className="bg-blue-600 hover:bg-blue-700 text-white"
         type="button"
+        disabled={currentBet > 0 && playerChips < currentBet}
       >
         {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
       </Button>
@@ -79,7 +101,7 @@ const ActionButtons = ({
         onClick={() => handleBetAction('raise')}
         className="bg-green-600 hover:bg-green-700 text-white col-span-2 lg:col-span-1"
         type="button"
-        disabled={playerChips < betAmount}
+        disabled={playerChips < betAmount || betAmount < minRaise || betAmount > maxRaise}
       >
         Raise ({betAmount})
       </Button>

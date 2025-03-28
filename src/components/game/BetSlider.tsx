@@ -23,15 +23,25 @@ const BetSlider = ({
     console.log("BetSlider: maxRaise is", maxRaise);
     console.log("BetSlider: playerChips is", playerChips);
     
+    // Use the minRaise as the default bet but ensure it doesn't exceed player's chips
     const newBetAmount = Math.min(Math.max(minRaise, 5), playerChips);
-    setBetAmount(newBetAmount);
-    onBetAmountChange(newBetAmount);
+    
+    // Round to the nearest multiple of 5
+    const roundedAmount = Math.round(newBetAmount / 5) * 5;
+    
+    // Set the amount and notify parent
+    setBetAmount(roundedAmount);
+    onBetAmountChange(roundedAmount);
   }, [minRaise, maxRaise, playerChips, onBetAmountChange]);
   
   const handleBetAmountChange = (value: number[]) => {
     console.log("BetSlider: Changing bet amount to", value[0]);
-    setBetAmount(value[0]);
-    onBetAmountChange(value[0]);
+    
+    // Round to the nearest multiple of 5
+    const roundedAmount = Math.round(value[0] / 5) * 5;
+    
+    setBetAmount(roundedAmount);
+    onBetAmountChange(roundedAmount);
   };
   
   const effectiveMaxRaise = Math.min(playerChips, maxRaise);
