@@ -1,8 +1,10 @@
-import { GameState, GamePhase } from '@/types/poker';
-import { compareHands, createDeck, getHandRank } from '@/utils/pokerUtils';
+
+import { toast } from 'sonner';
+import { GameState } from '@/types/poker';
+import { compareHands, getHandRank } from '@/utils/pokerUtils';
 
 export const handleShowdown = (
-  newGameState: GameState,
+  currentState: GameState,
   setShowOpponentCards: React.Dispatch<React.SetStateAction<boolean>>,
   setPlayerMessage: React.Dispatch<React.SetStateAction<string | null>>,
   setOpponentMessage: React.Dispatch<React.SetStateAction<string | null>>,
@@ -11,47 +13,54 @@ export const handleShowdown = (
 ) => {
   setShowOpponentCards(true);
   
-  const playerHand = newGameState.playerHand;
-  const opponentHand = newGameState.opponentHand;
+  const result = compareHands(currentState.playerHand, currentState.opponentHand);
+  const playerHandRank = getHandRank(currentState.playerHand);
+  const opponentHandRank = getHandRank(currentState.opponentHand);
   
-  const playerHandRank = getHandRank(playerHand);
-  const opponentHandRank = getHandRank(opponentHand);
+  let roundWinner: 'player' | 'opponent' | 'tie' | null = null;
   
-  const winner = compareHands(playerHand, opponentHand);
-  
-  let winningMessage = '';
-  if (winner === 'hand1') {
-    newGameState.playerChips += newGameState.pot;
-    winningMessage = `You win with ${playerHandRank.name}!`;
-    newGameState.lastRoundWinner = 'player';
-  } else if (winner === 'hand2') {
-    newGameState.opponentChips += newGameState.pot;
-    winningMessage = `Opponent wins with ${opponentHandRank.name}!`;
-    newGameState.lastRoundWinner = 'opponent';
-  } else {
-    newGameState.playerChips += newGameState.pot / 2;
-    newGameState.opponentChips += newGameState.pot / 2;
-    winningMessage = 'It\'s a tie!';
-    newGameState.lastRoundWinner = null;
+  if (result === 'hand1') {
+    roundWinner = 'player';
+    currentState.playerChips += currentState.pot;
+    setPlayerMessage("You win this round!");
+    setOpponentMessage("Opponent loses!");
+    setWinningHand && setWinningHand(`You won with ${playerHandRank.name}`);
+  } 
+  else if (result === 'hand2') {
+    roundWinner = 'opponent';
+    currentState.opponentChips += currentState.pot;
+    setPlayerMessage("You lose this round!");
+    setOpponentMessage("Opponent wins!");
+    setWinningHand && setWinningHand(`Opponent won with ${opponentHandRank.name}`);
+  } 
+  else {
+    roundWinner = 'tie';
+    const halfPot = Math.floor(currentState.pot / 2);
+    currentState.playerChips += halfPot;
+    currentState.opponentChips += halfPot;
+    setPlayerMessage("It's a tie!");
+    setOpponentMessage("It's a tie!");
+    setWinningHand && setWinningHand(`Tie with ${playerHandRank.name}`);
   }
   
-  newGameState.winner = winner === 'hand1' ? 'player' : winner === 'hand2' ? 'opponent' : 'tie';
-  newGameState.gamePhase = 'roundOver';
+  updateLocalStorage(currentState.playerChips);
   
-  setPlayerMessage(winningMessage);
-  setOpponentMessage(winningMessage);
+  currentState.lastRoundWinner = roundWinner === 'tie' ? currentState.lastRoundWinner : roundWinner;
+  currentState.gamePhase = 'roundOver';
   
-  if (setWinningHand) {
-    if (winner === 'hand1') {
-      setWinningHand(playerHandRank.name);
-    } else if (winner === 'hand2') {
-      setWinningHand(opponentHandRank.name);
+  if (currentState.currentRound >= currentState.totalRounds) {
+    currentState.gamePhase = 'gameOver';
+    
+    if (currentState.playerChips > currentState.opponentChips) {
+      currentState.winner = 'player';
+    } else if (currentState.opponentChips > currentState.playerChips) {
+      currentState.winner = 'opponent';
     } else {
-      setWinningHand('Tie');
+      currentState.winner = 'tie';
     }
   }
   
-  updateLocalStorage(newGameState.playerChips);
+  return currentState;
 };
 
 interface UseShowdownProps {
@@ -77,34 +86,19 @@ export const useShowdown = ({
   const handleNextRound = () => {
     if (gameState.gamePhase !== 'roundOver') return;
     
-    if (gameState.currentRound >= gameState.totalRounds) {
-      const finalWinner = gameState.playerChips > gameState.opponentChips 
-        ? 'player' : gameState.opponentChips > gameState.playerChips 
-        ? 'opponent' : 'tie';
-      
+    if (gameState.playerChips < gameState.anteAmount) {
+      toast.error("Not enough chips for the next round's ante!");
+      return { redirect: true, to: '/buy-chips' };
+    }
+    
+    if (gameState.opponentChips < gameState.anteAmount) {
+      toast.success("You've cleaned out your opponent! Game over.");
       setGameState(prev => ({
         ...prev,
         gamePhase: 'gameOver',
-        winner: finalWinner
+        winner: 'player'
       }));
-      
-      if (finalWinner === 'player') {
-        setPlayerMessage("You won the game!");
-        setOpponentMessage("Game over!");
-      } else if (finalWinner === 'opponent') {
-        setPlayerMessage("Game over!");
-        setOpponentMessage("Opponent won the game!");
-      } else {
-        setPlayerMessage("Game ended in a tie!");
-        setOpponentMessage("Game ended in a tie!");
-      }
-      
-      return;
-    }
-    
-    if (gameState.playerChips < gameState.anteAmount) {
-      setPlayerMessage("Not enough chips to continue!");
-      return { redirect: true };
+      return { redirect: false };
     }
     
     const newDeck = createDeck();
@@ -117,14 +111,14 @@ export const useShowdown = ({
       communityCards: [],
       pot: 0,
       currentBet: 0,
-      playerTurn: true,
       gamePhase: 'start',
       winner: null,
       currentRound: prev.currentRound + 1
     }));
     
+    setSelectedCards([]);
     setShowOpponentCards(false);
-    setPlayerMessage(null);
+    setPlayerMessage(`Round ${gameState.currentRound + 1} of ${gameState.totalRounds}`);
     setOpponentMessage(null);
     setWinningHand(null);
     

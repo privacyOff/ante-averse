@@ -1,5 +1,5 @@
 
-import { GameState, GamePhase } from '@/types/poker';
+import { GameState } from '@/types/poker';
 import { dealCards } from '@/utils/pokerUtils';
 
 interface UseCardSwapProps {

@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ChipCounter from '@/components/ChipCounter';
 import PokerTable from '@/components/PokerTable';
@@ -5,7 +6,7 @@ import GameControls from '@/components/GameControls';
 import GameHeader from '@/components/game/GameHeader';
 import PlayerInfo from '@/components/game/PlayerInfo';
 import WinningHandDisplay from '@/components/game/WinningHandDisplay';
-import { usePokerGame } from '@/hooks/poker/usePokerGame';
+import { usePokerGame } from '@/hooks/usePokerGame';
 
 const GamePage = () => {
   const { difficulty = 'beginner' } = useParams();
