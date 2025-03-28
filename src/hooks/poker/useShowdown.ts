@@ -102,7 +102,6 @@ export const useShowdown = ({
       return;
     }
     
-    // If player is broke, they can't continue
     if (gameState.playerChips < gameState.anteAmount) {
       setPlayerMessage("Not enough chips to continue!");
       return { redirect: true };
