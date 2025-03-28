@@ -20,7 +20,7 @@ export const handleShowdown = (
   const winner = compareHands(playerHand, opponentHand);
   
   let winningMessage = '';
-  if (winner === 'player') {
+  if (winner === 'hand1') {
     newGameState.playerChips += newGameState.pot;
     winningMessage = `You win with ${playerHandRank.name}!`;
     newGameState.lastRoundWinner = 'player';
@@ -35,14 +35,14 @@ export const handleShowdown = (
     newGameState.lastRoundWinner = null;
   }
   
-  newGameState.winner = winner === 'player' ? 'player' : winner === 'hand2' ? 'opponent' : 'tie';
+  newGameState.winner = winner === 'hand1' ? 'player' : winner === 'hand2' ? 'opponent' : 'tie';
   newGameState.gamePhase = 'roundOver';
   
   setPlayerMessage(winningMessage);
   setOpponentMessage(winningMessage);
   
   if (setWinningHand) {
-    if (winner === 'player') {
+    if (winner === 'hand1') {
       setWinningHand(playerHandRank.name);
     } else if (winner === 'hand2') {
       setWinningHand(opponentHandRank.name);
