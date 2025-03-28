@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BetAction } from '@/types/poker';
 import { toast } from 'sonner';
@@ -22,9 +22,14 @@ const ActionButtons = ({
   playerChips
 }: ActionButtonsProps) => {
   
+  useEffect(() => {
+    console.log("ActionButtons rendered with onBetAction:", !!onBetAction);
+    console.log("betAmount:", betAmount, "currentBet:", currentBet);
+  }, [onBetAction, betAmount, currentBet]);
+  
   const handleBetAction = (action: BetAction) => {
-    console.log(`Bet action: ${action}, function exists:`, !!onBetAction);
-    console.log(`Current bet amount: ${betAmount}, current bet: ${currentBet}`);
+    console.log(`ActionButtons: handleBetAction called with ${action}`);
+    console.log(`ActionButtons: onBetAction function exists: ${!!onBetAction}`);
     
     if (!onBetAction) {
       toast.error("Bet action function not available");
@@ -33,21 +38,18 @@ const ActionButtons = ({
     }
     
     try {
+      console.log(`Executing ${action.toUpperCase()} action`);
+      
       if (action === 'raise') {
-        console.log("Executing RAISE action with amount:", betAmount);
-        toast.success(`Raising ${betAmount} chips`);
+        console.log(`Raising ${betAmount} chips`);
         onBetAction(action, betAmount);
+        toast.success(`Raising ${betAmount} chips`);
       } else if (action === 'call') {
-        console.log("Executing CALL action");
+        onBetAction(action);
         toast.success(currentBet > 0 ? "Calling" : "Checking");
-        onBetAction(action);
       } else if (action === 'fold') {
-        console.log("Executing FOLD action");
-        toast.success("Folding");
         onBetAction(action);
-      } else {
-        console.error("Unknown bet action:", action);
-        toast.error("Unknown bet action");
+        toast.success("Folding");
       }
     } catch (error) {
       console.error("Error executing bet action:", error);
@@ -77,6 +79,7 @@ const ActionButtons = ({
         onClick={() => handleBetAction('raise')}
         className="bg-green-600 hover:bg-green-700 text-white col-span-2 lg:col-span-1"
         type="button"
+        disabled={playerChips < betAmount}
       >
         Raise ({betAmount})
       </Button>

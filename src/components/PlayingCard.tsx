@@ -140,7 +140,7 @@ const PlayingCard = ({
         
         <motion.div
           className={cn(
-            "absolute w-full h-full backface-hidden rounded-lg p-2 flex flex-col justify-between",
+            "absolute w-full h-full backface-hidden rounded-lg p-2 flex flex-col justify-between overflow-hidden",
             card.rank === 'Joker' ? "bg-gradient-to-br from-zinc-900 to-black" : "bg-white"
           )}
           initial={{ rotateY: 180 }}
@@ -159,7 +159,7 @@ const PlayingCard = ({
           ) : (
             // Normal Card
             <>
-              <div className={cn("text-xl font-bold", color)}>
+              <div className={cn("text-lg font-bold leading-tight", color)}>
                 <div className="flex flex-col items-start">
                   <span>{displayRank}</span>
                   <span className="text-lg">{symbol}</span>
@@ -168,7 +168,7 @@ const PlayingCard = ({
               <div className={cn("text-4xl flex-grow flex items-center justify-center", color)}>
                 {symbol}
               </div>
-              <div className={cn("text-xl font-bold rotate-180", color)}>
+              <div className={cn("text-lg font-bold leading-tight rotate-180", color)}>
                 <div className="flex flex-col items-start">
                   <span>{displayRank}</span>
                   <span className="text-lg">{symbol}</span>
