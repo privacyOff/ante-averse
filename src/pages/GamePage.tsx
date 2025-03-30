@@ -98,7 +98,7 @@ const GamePage = () => {
             maxRaise={gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6}
             selectedCards={selectedCards}
             cutAmount={cutAmount}
-            onCutAmountChange={handleCutAmountChange}
+            onCutAmountChange={(amount) => handleCutAmountChange(amount)}
             playAgainLabel={gameState.gamePhase === 'gameOver' ? 'Play Again' : 'Next Round'}
             className="max-w-md mx-auto"
           />
