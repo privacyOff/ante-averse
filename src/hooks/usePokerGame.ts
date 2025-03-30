@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { GameDifficulty } from '@/types/poker';
+import { GameDifficulty, GamePhase } from '@/types/poker';
 import { createDeck } from '@/utils/pokerUtils';
-import { useAnte } from './poker/useAnte';
-import { useCutDeck } from './poker/useCutDeck';
-import { useBetting } from './poker/useBetting';
-import { useCardSwap } from './poker/useCardSwap';
-import { useShowdown } from './poker/useShowdown';
+import { useAnte } from '@/hooks/poker/useAnte';
+import { useCutDeck } from '@/hooks/poker/useCutDeck';
+import { useBetting } from '@/hooks/poker/useBetting';
+import { useCardSwap } from '@/hooks/poker/useCardSwap';
+import { useShowdown } from '@/hooks/poker/useShowdown';
 
 export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   const difficulty = initialDifficulty as GameDifficulty;
@@ -23,7 +23,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     opponentChips: 1000,
     currentBet: 0,
     playerTurn: true,
-    gamePhase: 'start',
+    gamePhase: 'start' as GamePhase,
     winner: null,
     anteAmount: difficulty === 'beginner' ? 5 : difficulty === 'intermediate' ? 10 : 20,
     currentRound: 1,
@@ -59,7 +59,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
       pot: 0,
       currentBet: 0,
       playerTurn: true,
-      gamePhase: 'start',
+      gamePhase: 'start' as GamePhase,
       winner: null,
       currentRound: 1,
       lastRoundWinner: null,
@@ -72,7 +72,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setWinningHand(null);
   };
   
-  const handleOpponentTurn = (phase: any) => {
+  const handleOpponentTurn = (phase: GamePhase) => {
     // This is a placeholder that will call the appropriate phase handler
     if (gameState.playerTurn || gameState.winner) return;
     
@@ -83,7 +83,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     }
   };
   
-  const handleOpponentBetting = (phase: any) => {
+  const handleOpponentBetting = (phase: GamePhase) => {
     // This would be implemented in useBetting but we're adding a simplified version here
     console.log(`Opponent betting in phase: ${phase}`);
   };

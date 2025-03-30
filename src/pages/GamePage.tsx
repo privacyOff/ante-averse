@@ -7,6 +7,7 @@ import GameHeader from '@/components/game/GameHeader';
 import PlayerInfo from '@/components/game/PlayerInfo';
 import WinningHandDisplay from '@/components/game/WinningHandDisplay';
 import { usePokerGame } from '@/hooks/usePokerGame';
+import { GamePhase } from '@/types/poker';
 
 const GamePage = () => {
   const { difficulty = 'beginner' } = useParams();
@@ -85,7 +86,7 @@ const GamePage = () => {
           className="mb-8"
         >
           <GameControls
-            gamePhase={gameState.gamePhase}
+            gamePhase={gameState.gamePhase as GamePhase}
             onAnte={handleAnte}
             onCutDeck={handleCutDeck}
             onBetAction={handleBetAction}
@@ -98,7 +99,7 @@ const GamePage = () => {
             maxRaise={gameState.gamePhase === 'firstBet' ? gameState.anteAmount * 3 : gameState.anteAmount * 6}
             selectedCards={selectedCards}
             cutAmount={cutAmount}
-            onCutAmountChange={(amount) => handleCutAmountChange(amount)}
+            onCutAmountChange={handleCutAmountChange}
             playAgainLabel={gameState.gamePhase === 'gameOver' ? 'Play Again' : 'Next Round'}
             className="max-w-md mx-auto"
           />
@@ -106,7 +107,7 @@ const GamePage = () => {
         
         <WinningHandDisplay
           winningHand={winningHand}
-          gamePhase={gameState.gamePhase}
+          gamePhase={gameState.gamePhase as GamePhase}
           winner={gameState.winner}
         />
       </div>

@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { GamePhase } from '@/types/poker';
 import { compareHands, getHandRank, createDeck } from '@/utils/pokerUtils';
 import { toast } from 'sonner';
 
@@ -79,7 +80,7 @@ export const useShowdown = (
       toast.success("You've cleaned out your opponent! Game over.");
       setGameState(prev => ({
         ...prev,
-        gamePhase: 'gameOver',
+        gamePhase: 'gameOver' as GamePhase,
         winner: 'player'
       }));
       return { redirect: false };
@@ -95,7 +96,7 @@ export const useShowdown = (
       communityCards: [],
       pot: 0,
       currentBet: 0,
-      gamePhase: 'start',
+      gamePhase: 'start' as GamePhase,
       winner: null,
       currentRound: prev.currentRound + 1
     }));
@@ -120,7 +121,7 @@ export const useShowdown = (
       pot: 0,
       currentBet: 0,
       playerTurn: true,
-      gamePhase: 'start',
+      gamePhase: 'start' as GamePhase,
       winner: null,
       currentRound: 1,
       lastRoundWinner: null,

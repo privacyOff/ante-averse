@@ -20,7 +20,7 @@ export const useCardSwap = (
       
       setGameState(prev => ({
         ...prev,
-        gamePhase: 'secondBet',
+        gamePhase: 'secondBet' as GamePhase,
         playerTurn: cardsToSwap > 0 ? false : prev.currentRound === 1 || prev.lastRoundWinner === 'player',
       }));
       
@@ -46,7 +46,7 @@ export const useCardSwap = (
       ...prev,
       playerHand: newPlayerHand,
       deck: newDeck,
-      gamePhase: 'secondBet',
+      gamePhase: 'secondBet' as GamePhase,
       playerTurn: prev.currentRound === 1 || prev.lastRoundWinner === 'player',
     }));
     
