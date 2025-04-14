@@ -51,8 +51,8 @@ const GamePage = () => {
     if (gameState.gamePhase === 'showdown' && winningHand) {
       const newResult: RoundResult = {
         roundNumber: gameState.currentRound,
-        playerHand: winningHand,
-        opponentHand: winningHand,
+        playerHand: gameState.playerHand.map(card => `${card.rank}${card.suit[0]}`).join(' '),
+        opponentHand: gameState.opponentHand.map(card => `${card.rank}${card.suit[0]}`).join(' '),
         potAmount: gameState.pot,
         winner: gameState.winner || 'tie'
       };

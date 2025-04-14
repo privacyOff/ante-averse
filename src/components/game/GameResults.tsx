@@ -30,8 +30,8 @@ const GameResults = ({ isOpen, roundResults, finalPlayerChips, finalOpponentChip
   if (!isOpen) return null;
 
   const finalWinner = finalPlayerChips > finalOpponentChips ? 'player' : 'opponent';
-  const playerTotalWinnings = finalPlayerChips - 1000; // Starting chips is 1000
-  const showConfetti = finalWinner === 'player';
+  const playerChipsEarned = finalPlayerChips - 1000; // Starting chips is 1000
+  const opponentChipsEarned = finalOpponentChips - 1000;
 
   return (
     <motion.div
@@ -56,58 +56,59 @@ const GameResults = ({ isOpen, roundResults, finalPlayerChips, finalOpponentChip
           </h2>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Round</TableHead>
-              <TableHead>Your Hand</TableHead>
-              <TableHead>Opponent's Hand</TableHead>
-              <TableHead>Pot</TableHead>
-              <TableHead>Winner</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {roundResults.map((result) => (
-              <TableRow key={result.roundNumber}>
-                <TableCell>{result.roundNumber}</TableCell>
-                <TableCell>{result.playerHand}</TableCell>
-                <TableCell>{result.opponentHand}</TableCell>
-                <TableCell>{result.potAmount}</TableCell>
-                <TableCell className={
-                  result.winner === 'player' 
-                    ? 'text-green-500' 
-                    : result.winner === 'opponent' 
-                      ? 'text-red-500' 
-                      : 'text-yellow-500'
-                }>
-                  {result.winner === 'player' 
-                    ? 'You' 
-                    : result.winner === 'opponent' 
-                      ? 'Opponent' 
-                      : 'Tie'}
-                </TableCell>
+        <div className="mb-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Round</TableHead>
+                <TableHead>Your Hand</TableHead>
+                <TableHead>Opponent's Hand</TableHead>
+                <TableHead>Pot</TableHead>
+                <TableHead>Winner</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {roundResults.map((result) => (
+                <TableRow key={result.roundNumber}>
+                  <TableCell>{result.roundNumber}</TableCell>
+                  <TableCell>{result.playerHand}</TableCell>
+                  <TableCell>{result.opponentHand}</TableCell>
+                  <TableCell>{result.potAmount}</TableCell>
+                  <TableCell className={
+                    result.winner === 'player' 
+                      ? 'text-green-500' 
+                      : result.winner === 'opponent' 
+                        ? 'text-red-500' 
+                        : 'text-yellow-500'
+                  }>
+                    {result.winner === 'player' 
+                      ? 'You' 
+                      : result.winner === 'opponent' 
+                        ? 'Opponent' 
+                        : 'Tie'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-        <div className="mt-6 p-4 bg-zinc-800/50 rounded-lg">
+        <div className="p-4 bg-zinc-800/50 rounded-lg">
           <h3 className="text-xl font-semibold mb-2">Final Results</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-zinc-400">Your Final Chips</p>
-              <p className="text-2xl font-bold text-poker-gold">{finalPlayerChips}</p>
+              <p className="text-sm text-zinc-400">Your Chips Earned</p>
+              <p className={`text-2xl font-bold ${playerChipsEarned >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {playerChipsEarned >= 0 ? `+${playerChipsEarned}` : playerChipsEarned}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-zinc-400">Opponent's Final Chips</p>
-              <p className="text-2xl font-bold text-red-500">{finalOpponentChips}</p>
+              <p className="text-sm text-zinc-400">Opponent's Chips Earned</p>
+              <p className={`text-2xl font-bold ${opponentChipsEarned >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {opponentChipsEarned >= 0 ? `+${opponentChipsEarned}` : opponentChipsEarned}
+              </p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-zinc-400">
-            {finalWinner === 'player' 
-              ? `You won ${playerTotalWinnings} chips!` 
-              : 'Better luck next time!'}
-          </p>
         </div>
 
         <button
