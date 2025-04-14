@@ -51,7 +51,7 @@ export const useCutDeck = (
       deck: deck,
       playerHand: playerHand,
       opponentHand: opponentHand,
-      gamePhase: 'firstBet',
+      gamePhase: 'firstBet' as GamePhase,
       playerTurn: prev.currentRound === 1 || prev.lastRoundWinner === 'player'
     }));
     
@@ -67,6 +67,7 @@ export const useCutDeck = (
   };
   
   const handleCutAmountChange = (amount: number): boolean => {
+    console.log("Cut amount changed to:", amount);
     setCutAmount(amount);
     return true;
   };

@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { BetAction } from '@/types/poker';
 import { toast } from 'sonner';
@@ -59,24 +58,27 @@ const ActionButtons = ({
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
       <Button 
         onClick={() => handleBetAction('fold')}
-        className="bg-zinc-800 hover:bg-zinc-700 text-white"
+        variant="destructive"
         type="button"
+        className="cursor-pointer hover:brightness-110 transition-all"
       >
         Fold
       </Button>
       
       <Button 
         onClick={() => handleBetAction('call')}
-        className="bg-blue-600 hover:bg-blue-700 text-white"
+        variant="secondary"
         type="button"
+        className="cursor-pointer hover:brightness-110 transition-all"
       >
         {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
       </Button>
       
       <Button 
         onClick={() => handleBetAction('raise')}
-        className="bg-green-600 hover:bg-green-700 text-white col-span-2 lg:col-span-1"
+        variant="default"
         type="button"
+        className="cursor-pointer hover:brightness-110 transition-all col-span-2 lg:col-span-1"
       >
         Raise ({betAmount})
       </Button>

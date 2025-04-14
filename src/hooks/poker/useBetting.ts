@@ -12,7 +12,12 @@ export const useBetting = (
   updateLocalStorage: (chips: number) => void
 ) => {
   const handleBetAction = (action: BetAction, amount?: number) => {
-    if (gameState.gamePhase !== 'firstBet' && gameState.gamePhase !== 'secondBet') return;
+    console.log("Bet action received:", action, "with amount:", amount);
+    
+    if (gameState.gamePhase !== 'firstBet' && gameState.gamePhase !== 'secondBet') {
+      console.log("Invalid game phase for betting:", gameState.gamePhase);
+      return;
+    }
     
     const phase = gameState.gamePhase;
     const currentBet = gameState.currentBet;
@@ -48,10 +53,16 @@ export const useBetting = (
         break;
         
       case 'raise':
-        if (!amount) return;
+        if (!amount) {
+          console.error("Raise action requires an amount");
+          return;
+        }
         
         const raiseAmount = amount;
-        if (raiseAmount > newPlayerChips) return;
+        if (raiseAmount > newPlayerChips) {
+          console.error("Not enough chips to raise");
+          return;
+        }
         
         newPlayerChips -= raiseAmount;
         newPot += raiseAmount;
@@ -59,16 +70,24 @@ export const useBetting = (
         break;
         
       default:
+        console.error("Unknown bet action:", action);
         return;
     }
     
     // Move to the next phase
     if (phase === 'firstBet') {
-      newGamePhase = 'swap';
+      newGamePhase = 'swap' as GamePhase;
     } else if (phase === 'secondBet') {
-      newGamePhase = 'showdown';
+      newGamePhase = 'showdown' as GamePhase;
       setShowOpponentCards(true);
     }
+    
+    console.log("Updating game state:", {
+      playerChips: newPlayerChips,
+      pot: newPot,
+      gamePhase: newGamePhase,
+      message: message
+    });
     
     setGameState(prev => ({
       ...prev,
