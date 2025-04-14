@@ -158,6 +158,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     handleCardSelect,
     handleNextRound,
     handlePlayAgain,
+    handleShowdown,
     handleCutAmountChange
   };
 };

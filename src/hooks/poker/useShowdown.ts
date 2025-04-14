@@ -15,7 +15,9 @@ export const useShowdown = (
   setSelectedCards: React.Dispatch<React.SetStateAction<number[]>>,
   updateLocalStorage: (chips: number) => void
 ) => {
-  const handleShowdown = (currentState: any) => {
+  const handleShowdown = (currentState = gameState) => {
+    if (currentState.gamePhase !== 'showdown') return;
+    
     setShowOpponentCards(true);
     
     const result = compareHands(currentState.playerHand, currentState.opponentHand);
@@ -23,20 +25,24 @@ export const useShowdown = (
     const opponentHandRank = getHandRank(currentState.opponentHand);
     
     let roundWinner: 'player' | 'opponent' | 'tie' | null = null;
+    let winningMessage = '';
     
     if (result === 'hand1') {
       roundWinner = 'player';
-      currentState.playerChips += currentState.pot;
-      setPlayerMessage("You win this round!");
+      const winAmount = currentState.pot;
+      currentState.playerChips += winAmount;
+      setPlayerMessage(`You win ${winAmount} chips!`);
       setOpponentMessage("Opponent loses!");
-      setWinningHand(`You won with ${playerHandRank.name}`);
+      winningMessage = `You won with ${playerHandRank.name}`;
+      toast.success(`You won the round with ${playerHandRank.name}!`);
     } 
     else if (result === 'hand2') {
       roundWinner = 'opponent';
       currentState.opponentChips += currentState.pot;
       setPlayerMessage("You lose this round!");
       setOpponentMessage("Opponent wins!");
-      setWinningHand(`Opponent won with ${opponentHandRank.name}`);
+      winningMessage = `Opponent won with ${opponentHandRank.name}`;
+      toast.error(`Opponent won the round with ${opponentHandRank.name}.`);
     } 
     else {
       roundWinner = 'tie';
@@ -45,27 +51,36 @@ export const useShowdown = (
       currentState.opponentChips += halfPot;
       setPlayerMessage("It's a tie!");
       setOpponentMessage("It's a tie!");
-      setWinningHand(`Tie with ${playerHandRank.name}`);
+      winningMessage = `Tie with ${playerHandRank.name}`;
+      toast.info(`The round ended in a tie with ${playerHandRank.name}.`);
     }
     
     updateLocalStorage(currentState.playerChips);
     
-    currentState.lastRoundWinner = roundWinner === 'tie' ? currentState.lastRoundWinner : roundWinner;
-    currentState.gamePhase = 'roundOver';
+    const newState = {
+      ...currentState,
+      lastRoundWinner: roundWinner === 'tie' ? currentState.lastRoundWinner : roundWinner,
+      gamePhase: 'roundOver' as GamePhase,
+      pot: 0
+    };
     
-    if (currentState.currentRound >= currentState.totalRounds) {
-      currentState.gamePhase = 'gameOver';
+    if (newState.currentRound >= newState.totalRounds) {
+      newState.gamePhase = 'gameOver' as GamePhase;
       
-      if (currentState.playerChips > currentState.opponentChips) {
-        currentState.winner = 'player';
-      } else if (currentState.opponentChips > currentState.playerChips) {
-        currentState.winner = 'opponent';
+      if (newState.playerChips > newState.opponentChips) {
+        newState.winner = 'player';
+        toast.success("Congratulations! You've won the game!");
+      } else if (newState.opponentChips > newState.playerChips) {
+        newState.winner = 'opponent';
+        toast.error("Game over! Your opponent has won.");
       } else {
-        currentState.winner = 'tie';
+        newState.winner = 'tie';
+        toast.info("The game has ended in a tie!");
       }
     }
     
-    setGameState(currentState);
+    setGameState(newState);
+    setWinningHand(winningMessage);
   };
   
   const handleNextRound = () => {
@@ -87,6 +102,8 @@ export const useShowdown = (
     }
     
     const newDeck = createDeck();
+    
+    toast.info(`Starting round ${gameState.currentRound + 1} of ${gameState.totalRounds}`);
     
     setGameState(prev => ({
       ...prev,
@@ -112,6 +129,9 @@ export const useShowdown = (
   
   const handlePlayAgain = () => {
     const newDeck = createDeck();
+    
+    toast.success("Starting a new game!");
+    
     setGameState(prev => ({
       ...prev,
       deck: newDeck,
@@ -129,7 +149,7 @@ export const useShowdown = (
     }));
     setSelectedCards([]);
     setShowOpponentCards(false);
-    setPlayerMessage(null);
+    setPlayerMessage("New game started!");
     setOpponentMessage(null);
     setWinningHand(null);
   };

@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { BetAction, GamePhase } from '@/types/poker';
+import { toast } from 'sonner';
 
 export const useBetting = (
   gameState: any,
@@ -30,6 +31,7 @@ export const useBetting = (
     switch (action) {
       case 'fold':
         // Player folds, opponent wins
+        toast.error("You folded. Your opponent wins this round.");
         setGameState(prev => ({
           ...prev,
           opponentChips: prev.opponentChips + prev.pot,
@@ -39,7 +41,7 @@ export const useBetting = (
         }));
         
         setPlayerMessage("You folded");
-        setOpponentMessage("Opponent folded, you win!");
+        setOpponentMessage("Opponent wins!");
         return;
         
       case 'call':
@@ -47,8 +49,10 @@ export const useBetting = (
           newPlayerChips -= currentBet;
           newPot += currentBet;
           message = `Called ${currentBet}`;
+          toast.info(`Called ${currentBet} chips`);
         } else {
           message = "Checked";
+          toast.info("Checked");
         }
         break;
         
@@ -61,12 +65,14 @@ export const useBetting = (
         const raiseAmount = amount;
         if (raiseAmount > newPlayerChips) {
           console.error("Not enough chips to raise");
+          toast.error("Not enough chips to raise");
           return;
         }
         
         newPlayerChips -= raiseAmount;
         newPot += raiseAmount;
         message = `Raised ${raiseAmount}`;
+        toast.success(`Raised ${raiseAmount} chips`);
         break;
         
       default:
@@ -79,7 +85,6 @@ export const useBetting = (
       newGamePhase = 'swap' as GamePhase;
     } else if (phase === 'secondBet') {
       newGamePhase = 'showdown' as GamePhase;
-      setShowOpponentCards(true);
     }
     
     console.log("Updating game state:", {
@@ -89,24 +94,39 @@ export const useBetting = (
       message: message
     });
     
-    setGameState(prev => ({
-      ...prev,
+    const updatedState = {
+      ...gameState,
       playerChips: newPlayerChips,
       pot: newPot,
       currentBet: action === 'raise' && amount ? amount : 0,
       gamePhase: newGamePhase,
       playerTurn: newGamePhase === 'swap' // Player always goes first in swap phase
-    }));
+    };
     
+    setGameState(updatedState);
     updateLocalStorage(newPlayerChips);
-    
     setPlayerMessage(message);
     
-    // If moving to showdown, handle it immediately
+    // If moving to showdown, handle it after a short delay
     if (newGamePhase === 'showdown') {
-      // Call the showdown handler (to be implemented in a different hook)
+      setTimeout(() => {
+        import('@/hooks/poker/useShowdown').then(({ useShowdown }) => {
+          const { handleShowdown } = useShowdown(
+            updatedState,
+            setGameState,
+            setShowOpponentCards,
+            setPlayerMessage,
+            setOpponentMessage,
+            () => {}, // This won't be used in this context
+            [],
+            () => {},
+            updateLocalStorage
+          );
+          
+          handleShowdown(updatedState);
+        });
+      }, 1000);
     } else if (newGamePhase === 'swap' && !gameState.playerTurn) {
-      // If it's not player's turn during swap phase, let the opponent swap
       setTimeout(() => {
         handleOpponentTurn('swap');
       }, 2000);
