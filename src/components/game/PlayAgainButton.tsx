@@ -29,8 +29,9 @@ const PlayAgainButton = ({
   return (
     <Button 
       onClick={handlePlayAgain}
-      className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold"
+      className="w-full bg-gradient-to-r from-poker-gold to-amber-500 hover:from-amber-500 hover:to-amber-600 text-black py-6 text-lg font-bold cursor-pointer relative z-10"
       type="button"
+      style={{cursor: 'pointer'}}
     >
       {playAgainLabel}
     </Button>

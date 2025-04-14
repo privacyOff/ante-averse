@@ -74,7 +74,7 @@ const GameControls = ({
   
   return (
     <motion.div 
-      className={className}
+      className={`${className} relative z-20`}
       variants={container}
       initial="hidden"
       animate="show"

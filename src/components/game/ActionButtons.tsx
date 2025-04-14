@@ -55,12 +55,13 @@ const ActionButtons = ({
   };
   
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 relative z-10">
       <Button 
         onClick={() => handleBetAction('fold')}
         variant="destructive"
         type="button"
         className="cursor-pointer hover:brightness-110 transition-all"
+        style={{cursor: 'pointer'}}
       >
         Fold
       </Button>
@@ -70,6 +71,7 @@ const ActionButtons = ({
         variant="secondary"
         type="button"
         className="cursor-pointer hover:brightness-110 transition-all"
+        style={{cursor: 'pointer'}}
       >
         {currentBet > 0 ? `Call (${currentBet})` : 'Check'}
       </Button>
@@ -79,6 +81,7 @@ const ActionButtons = ({
         variant="default"
         type="button"
         className="cursor-pointer hover:brightness-110 transition-all col-span-2 lg:col-span-1"
+        style={{cursor: 'pointer'}}
       >
         Raise ({betAmount})
       </Button>

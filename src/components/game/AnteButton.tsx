@@ -21,12 +21,13 @@ const AnteButton = ({ onAnte, anteAmount, playerChips }: AnteButtonProps) => {
   };
   
   return (
-    <div>
+    <div className="relative z-10">
       <Button 
         onClick={handleAnte}
-        className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold relative shine-effect"
+        className="w-full bg-gradient-to-r from-poker-red to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg font-bold relative shine-effect cursor-pointer"
         disabled={playerChips < anteAmount}
         type="button"
+        style={{cursor: playerChips < anteAmount ? 'not-allowed' : 'pointer'}}
       >
         Place Ante ({anteAmount} chips)
         <div className="button-shine"></div>

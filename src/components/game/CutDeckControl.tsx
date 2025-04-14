@@ -32,7 +32,7 @@ const CutDeckControl = ({
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative z-10">
       <div className="flex items-center gap-4 text-sm">
         <span className="text-white/60">Cards to cut:</span>
         <Slider
@@ -41,15 +41,16 @@ const CutDeckControl = ({
           max={10}
           step={1}
           onValueChange={handleCutAmountChange}
-          className="flex-1"
+          className="flex-1 cursor-pointer"
         />
         <span className="text-white/60 min-w-[20px] text-center">{cutAmount}</span>
       </div>
       
       <Button 
         onClick={handleCutDeck}
-        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold relative shine-effect"
+        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-6 text-lg font-bold relative shine-effect cursor-pointer"
         type="button"
+        style={{cursor: 'pointer'}}
       >
         Cut the Deck
         <div className="button-shine"></div>
