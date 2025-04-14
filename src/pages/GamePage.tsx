@@ -1,15 +1,28 @@
-
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
 import ChipCounter from '@/components/ChipCounter';
 import PokerTable from '@/components/PokerTable';
 import GameControls from '@/components/GameControls';
 import GameHeader from '@/components/game/GameHeader';
 import PlayerInfo from '@/components/game/PlayerInfo';
 import WinningHandDisplay from '@/components/game/WinningHandDisplay';
+import GameResults from '@/components/game/GameResults';
 import { usePokerGame } from '@/hooks/usePokerGame';
 import { GamePhase } from '@/types/poker';
 
+interface RoundResult {
+  roundNumber: number;
+  playerHand: string;
+  opponentHand: string;
+  potAmount: number;
+  winner: 'player' | 'opponent' | 'tie';
+}
+
 const GamePage = () => {
+  const [showResults, setShowResults] = useState(false);
+  const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
+  
   const { difficulty = 'beginner' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,10 +46,32 @@ const GamePage = () => {
     handlePlayAgain,
     handleCutAmountChange
   } = usePokerGame(difficulty);
-  
+
+  useEffect(() => {
+    if (gameState.gamePhase === 'showdown' && winningHand) {
+      const newResult: RoundResult = {
+        roundNumber: gameState.currentRound,
+        playerHand: winningHand,
+        opponentHand: winningHand,
+        potAmount: gameState.pot,
+        winner: gameState.winner || 'tie'
+      };
+      
+      setRoundResults(prev => [...prev, newResult]);
+    }
+
+    if (gameState.gamePhase === 'gameOver' && gameState.winner === 'player') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }, [gameState.gamePhase, winningHand, gameState.winner]);
+
   const handleNextRoundOrPlayAgain = () => {
     if (gameState.gamePhase === 'gameOver') {
-      handlePlayAgain();
+      setShowResults(true);
     } else {
       const result = handleNextRound();
       if (result?.redirect) {
@@ -100,7 +135,7 @@ const GamePage = () => {
             selectedCards={selectedCards}
             cutAmount={cutAmount}
             onCutAmountChange={handleCutAmountChange}
-            playAgainLabel={gameState.gamePhase === 'gameOver' ? 'Play Again' : 'Next Round'}
+            playAgainLabel={gameState.gamePhase === 'gameOver' ? 'View Results' : 'Next Round'}
             className="max-w-md mx-auto"
           />
         </PokerTable>
@@ -109,6 +144,17 @@ const GamePage = () => {
           winningHand={winningHand}
           gamePhase={gameState.gamePhase as GamePhase}
           winner={gameState.winner}
+        />
+
+        <GameResults
+          isOpen={showResults}
+          roundResults={roundResults}
+          finalPlayerChips={gameState.playerChips}
+          finalOpponentChips={gameState.opponentChips}
+          onClose={() => {
+            setShowResults(false);
+            handlePlayAgain();
+          }}
         />
       </div>
     </div>
