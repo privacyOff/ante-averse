@@ -27,8 +27,9 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   const [winningHand, setWinningHand] = useState<string | null>(null);
   const [cutAmount, setCutAmount] = useState(5);
   
+  // Initialize with a properly created deck
   const [gameState, setGameState] = useState({
-    deck: [],
+    deck: createDeck(), // Make sure we start with a created deck
     playerHand: [],
     opponentHand: [],
     communityCards: [],
@@ -80,6 +81,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     localStorage.removeItem('pokerRounds');
     setRoundsWon({ player: 0, opponent: 0 });
     const newDeck = createDeck();
+    console.log("Initializing new game with deck length:", newDeck.length);
     setGameState(prev => ({
       ...prev,
       deck: newDeck,
@@ -168,6 +170,19 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     saveRoundData,
     roundsWon
   );
+
+  // Initialize the game on first load
+  useEffect(() => {
+    // Check if the deck is empty and initialize if needed
+    if (gameState.deck.length === 0) {
+      const newDeck = createDeck();
+      console.log("Initializing deck in useEffect with length:", newDeck.length);
+      setGameState(prev => ({
+        ...prev,
+        deck: newDeck
+      }));
+    }
+  }, []);
 
   return {
     gameState,
