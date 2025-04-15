@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { GameDifficulty, GamePhase } from '@/types/poker';
@@ -20,6 +21,12 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   
   const [roundsWon, setRoundsWon] = useState({ player: 0, opponent: 0 });
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  const [playerMessage, setPlayerMessage] = useState<string | null>(null);
+  const [opponentMessage, setOpponentMessage] = useState<string | null>(null);
+  const [showOpponentCards, setShowOpponentCards] = useState(false);
+  const [winningHand, setWinningHand] = useState<string | null>(null);
+  const [cutAmount, setCutAmount] = useState(5);
+  
   const [gameState, setGameState] = useState({
     deck: [],
     playerHand: [],
@@ -63,6 +70,10 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     } else if (roundData.winner === 'opponent') {
       setRoundsWon(prev => ({ ...prev, opponent: prev.opponent + 1 }));
     }
+  };
+
+  const updateLocalStorage = (chips: number) => {
+    localStorage.setItem('pokerChips', chips.toString());
   };
 
   const initializeGame = () => {

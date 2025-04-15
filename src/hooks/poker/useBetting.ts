@@ -110,21 +110,10 @@ export const useBetting = (
     // If moving to showdown, handle it after a short delay
     if (newGamePhase === 'showdown') {
       setTimeout(() => {
-        import('@/hooks/poker/useShowdown').then(({ useShowdown }) => {
-          const { handleShowdown } = useShowdown(
-            updatedState,
-            setGameState,
-            setShowOpponentCards,
-            setPlayerMessage,
-            setOpponentMessage,
-            () => {}, // This won't be used in this context
-            [],
-            () => {},
-            updateLocalStorage
-          );
-          
-          handleShowdown(updatedState);
-        });
+        // Remove the problematic dynamic import and replace with a stub
+        // The actual showdown will be handled by the parent component
+        setShowOpponentCards(true);
+        handleOpponentTurn('showdown');
       }, 1000);
     } else if (newGamePhase === 'swap' && !gameState.playerTurn) {
       setTimeout(() => {
