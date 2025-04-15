@@ -1,4 +1,3 @@
-
 export type CardSuit = 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker';
 export type CardRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'Joker';
 
@@ -64,3 +63,11 @@ export const HAND_RANKINGS: Record<PokerHandRanking, number> = {
   'One Pair': 1,
   'High Card': 0
 };
+
+export interface RoundResult {
+  roundNumber: number;
+  playerHand: string;
+  opponentHand: string;
+  potAmount: number;
+  winner: 'player' | 'opponent' | 'tie';
+}

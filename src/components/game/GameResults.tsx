@@ -9,14 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-interface RoundResult {
-  roundNumber: number;
-  playerHand: string;
-  opponentHand: string;
-  potAmount: number;
-  winner: 'player' | 'opponent' | 'tie';
-}
+import { RoundResult } from '@/types/poker';
 
 interface GameResultsProps {
   isOpen: boolean;

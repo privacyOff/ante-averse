@@ -1,20 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { GameDifficulty, GamePhase } from '@/types/poker';
+import confetti from 'canvas-confetti';
+import { GameDifficulty, GamePhase, RoundResult } from '@/types/poker';
 import { createDeck } from '@/utils/pokerUtils';
 import { useAnte } from '@/hooks/poker/useAnte';
 import { useCutDeck } from '@/hooks/poker/useCutDeck';
 import { useBetting } from '@/hooks/poker/useBetting';
 import { useCardSwap } from '@/hooks/poker/useCardSwap';
 import { useShowdown } from '@/hooks/poker/useShowdown';
-
-interface RoundData {
-  playerHand: string;
-  opponentHand: string;
-  pot: number;
-  winner: 'player' | 'opponent' | 'tie' | null;
-}
 
 export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   const difficulty = initialDifficulty as GameDifficulty;
@@ -26,10 +19,11 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   const [showOpponentCards, setShowOpponentCards] = useState(false);
   const [winningHand, setWinningHand] = useState<string | null>(null);
   const [cutAmount, setCutAmount] = useState(5);
+  const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
   
-  // Initialize with a properly created deck
   const [gameState, setGameState] = useState({
-    deck: createDeck(), // Make sure we start with a created deck
+    deck: createDeck(),
     playerHand: [],
     opponentHand: [],
     communityCards: [],
@@ -60,15 +54,12 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     }
   }, []);
 
-  const saveRoundData = (roundData: RoundData) => {
-    const storedRounds = localStorage.getItem('pokerRounds');
-    const rounds = storedRounds ? JSON.parse(storedRounds) : [];
-    rounds.push(roundData);
-    localStorage.setItem('pokerRounds', JSON.stringify(rounds));
-
-    if (roundData.winner === 'player') {
+  const saveRoundData = (result: RoundResult) => {
+    setRoundResults(prev => [...prev, result]);
+    
+    if (result.winner === 'player') {
       setRoundsWon(prev => ({ ...prev, player: prev.player + 1 }));
-    } else if (roundData.winner === 'opponent') {
+    } else if (result.winner === 'opponent') {
       setRoundsWon(prev => ({ ...prev, opponent: prev.opponent + 1 }));
     }
   };
@@ -168,12 +159,20 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setSelectedCards,
     updateLocalStorage,
     saveRoundData,
-    roundsWon
+    roundsWon,
+    () => {
+      if (roundsWon.player > roundsWon.opponent) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+      setShowResults(true);
+    }
   );
 
-  // Initialize the game on first load
   useEffect(() => {
-    // Check if the deck is empty and initialize if needed
     if (gameState.deck.length === 0) {
       const newDeck = createDeck();
       console.log("Initializing deck in useEffect with length:", newDeck.length);
@@ -193,6 +192,9 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     winningHand,
     cutAmount,
     roundsWon,
+    roundResults,
+    showResults,
+    setShowResults,
     handleAnte,
     handleCutDeck,
     handleBetAction,
