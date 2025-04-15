@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { GamePhase } from '@/types/poker';
+import { GamePhase, RoundResult } from '@/types/poker';
 import { compareHands, getHandRank, createDeck } from '@/utils/pokerUtils';
 import { toast } from 'sonner';
 
@@ -13,8 +14,9 @@ export const useShowdown = (
   selectedCards: number[],
   setSelectedCards: React.Dispatch<React.SetStateAction<number[]>>,
   updateLocalStorage: (chips: number) => void,
-  saveRoundData: (roundData: any) => void,
-  roundsWon: { player: number, opponent: number }
+  saveRoundData: (roundData: RoundResult) => void,
+  roundsWon: { player: number, opponent: number },
+  onGameComplete: () => void
 ) => {
   const handleShowdown = (currentState = gameState) => {
     if (currentState.gamePhase !== 'showdown') return;
@@ -55,9 +57,10 @@ export const useShowdown = (
     }
     
     saveRoundData({
+      roundNumber: currentState.currentRound,
       playerHand: playerHandRank.name,
       opponentHand: opponentHandRank.name,
-      pot: currentState.pot,
+      potAmount: currentState.pot,
       winner: roundWinner
     });
     
@@ -76,6 +79,7 @@ export const useShowdown = (
       if (roundsWon.player > roundsWon.opponent) {
         newState.winner = 'player';
         toast.success("Congratulations! You've won more rounds!");
+        onGameComplete();
       } else if (roundsWon.opponent > roundsWon.player) {
         newState.winner = 'opponent';
         toast.error("Game over! Your opponent has won more rounds.");
@@ -83,6 +87,7 @@ export const useShowdown = (
         if (newState.playerChips > newState.opponentChips) {
           newState.winner = 'player';
           toast.success("You've won on total chips!");
+          onGameComplete();
         } else if (newState.opponentChips > newState.playerChips) {
           newState.winner = 'opponent';
           toast.error("Opponent wins on total chips!");

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
@@ -45,7 +46,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     const storedRounds = localStorage.getItem('pokerRounds');
     if (storedRounds) {
       const rounds = JSON.parse(storedRounds);
-      const wins = rounds.reduce((acc: { player: number, opponent: number }, round: RoundData) => {
+      const wins = rounds.reduce((acc: { player: number, opponent: number }, round: RoundResult) => {
         if (round.winner === 'player') acc.player++;
         if (round.winner === 'opponent') acc.opponent++;
         return acc;
