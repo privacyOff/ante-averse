@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { GamePhase } from '@/types/poker';
 import { compareHands, getHandRank, createDeck } from '@/utils/pokerUtils';
@@ -12,9 +13,7 @@ export const useShowdown = (
   setWinningHand: React.Dispatch<React.SetStateAction<string | null>>,
   selectedCards: number[],
   setSelectedCards: React.Dispatch<React.SetStateAction<number[]>>,
-  updateLocalStorage: (chips: number) => void,
-  saveRoundData: (roundData: any) => void,
-  roundsWon: { player: number, opponent: number }
+  updateLocalStorage: (chips: number) => void
 ) => {
   const handleShowdown = (currentState = gameState) => {
     if (currentState.gamePhase !== 'showdown') return;
@@ -36,14 +35,16 @@ export const useShowdown = (
       setOpponentMessage("Opponent loses!");
       winningMessage = `You won with ${playerHandRank.name}`;
       toast.success(`You won the round with ${playerHandRank.name}!`);
-    } else if (result === 'hand2') {
+    } 
+    else if (result === 'hand2') {
       roundWinner = 'opponent';
       currentState.opponentChips += currentState.pot;
       setPlayerMessage("You lose this round!");
       setOpponentMessage("Opponent wins!");
       winningMessage = `Opponent won with ${opponentHandRank.name}`;
       toast.error(`Opponent won the round with ${opponentHandRank.name}.`);
-    } else {
+    } 
+    else {
       roundWinner = 'tie';
       const halfPot = Math.floor(currentState.pot / 2);
       currentState.playerChips += halfPot;
@@ -53,13 +54,6 @@ export const useShowdown = (
       winningMessage = `Tie with ${playerHandRank.name}`;
       toast.info(`The round ended in a tie with ${playerHandRank.name}.`);
     }
-    
-    saveRoundData({
-      playerHand: playerHandRank.name,
-      opponentHand: opponentHandRank.name,
-      pot: currentState.pot,
-      winner: roundWinner
-    });
     
     updateLocalStorage(currentState.playerChips);
     
@@ -73,23 +67,15 @@ export const useShowdown = (
     if (newState.currentRound >= newState.totalRounds) {
       newState.gamePhase = 'gameOver' as GamePhase;
       
-      if (roundsWon.player > roundsWon.opponent) {
+      if (newState.playerChips > newState.opponentChips) {
         newState.winner = 'player';
-        toast.success("Congratulations! You've won more rounds!");
-      } else if (roundsWon.opponent > roundsWon.player) {
+        toast.success("Congratulations! You've won the game!");
+      } else if (newState.opponentChips > newState.playerChips) {
         newState.winner = 'opponent';
-        toast.error("Game over! Your opponent has won more rounds.");
+        toast.error("Game over! Your opponent has won.");
       } else {
-        if (newState.playerChips > newState.opponentChips) {
-          newState.winner = 'player';
-          toast.success("You've won on total chips!");
-        } else if (newState.opponentChips > newState.playerChips) {
-          newState.winner = 'opponent';
-          toast.error("Opponent wins on total chips!");
-        } else {
-          newState.winner = 'tie';
-          toast.info("The game has ended in a perfect tie!");
-        }
+        newState.winner = 'tie';
+        toast.info("The game has ended in a tie!");
       }
     }
     

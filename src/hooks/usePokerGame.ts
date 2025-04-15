@@ -9,24 +9,10 @@ import { useBetting } from '@/hooks/poker/useBetting';
 import { useCardSwap } from '@/hooks/poker/useCardSwap';
 import { useShowdown } from '@/hooks/poker/useShowdown';
 
-interface RoundData {
-  playerHand: string;
-  opponentHand: string;
-  pot: number;
-  winner: 'player' | 'opponent' | 'tie' | null;
-}
-
 export const usePokerGame = (initialDifficulty: string = 'beginner') => {
   const difficulty = initialDifficulty as GameDifficulty;
   
-  const [roundsWon, setRoundsWon] = useState({ player: 0, opponent: 0 });
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
-  const [playerMessage, setPlayerMessage] = useState<string | null>(null);
-  const [opponentMessage, setOpponentMessage] = useState<string | null>(null);
-  const [showOpponentCards, setShowOpponentCards] = useState(false);
-  const [winningHand, setWinningHand] = useState<string | null>(null);
-  const [cutAmount, setCutAmount] = useState(5);
-  
   const [gameState, setGameState] = useState({
     deck: [],
     playerHand: [],
@@ -45,40 +31,24 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     lastRoundWinner: null,
     cutDeckAmount: 0
   });
-
+  
+  const [showOpponentCards, setShowOpponentCards] = useState(false);
+  const [playerMessage, setPlayerMessage] = useState<string | null>(null);
+  const [opponentMessage, setOpponentMessage] = useState<string | null>(null);
+  const [winningHand, setWinningHand] = useState<string | null>(null);
+  const [cutAmount, setCutAmount] = useState<number>(3);
+  
   useEffect(() => {
-    const storedRounds = localStorage.getItem('pokerRounds');
-    if (storedRounds) {
-      const rounds = JSON.parse(storedRounds);
-      const wins = rounds.reduce((acc: { player: number, opponent: number }, round: RoundData) => {
-        if (round.winner === 'player') acc.player++;
-        if (round.winner === 'opponent') acc.opponent++;
-        return acc;
-      }, { player: 0, opponent: 0 });
-      setRoundsWon(wins);
-    }
+    initializeGame();
   }, []);
-
-  const saveRoundData = (roundData: RoundData) => {
-    const storedRounds = localStorage.getItem('pokerRounds');
-    const rounds = storedRounds ? JSON.parse(storedRounds) : [];
-    rounds.push(roundData);
-    localStorage.setItem('pokerRounds', JSON.stringify(rounds));
-
-    if (roundData.winner === 'player') {
-      setRoundsWon(prev => ({ ...prev, player: prev.player + 1 }));
-    } else if (roundData.winner === 'opponent') {
-      setRoundsWon(prev => ({ ...prev, opponent: prev.opponent + 1 }));
-    }
-  };
-
+  
   const updateLocalStorage = (chips: number) => {
     localStorage.setItem('pokerChips', chips.toString());
+    const event = new CustomEvent('chipUpdate', { detail: { chips } });
+    window.dispatchEvent(event);
   };
-
+  
   const initializeGame = () => {
-    localStorage.removeItem('pokerRounds');
-    setRoundsWon({ player: 0, opponent: 0 });
     const newDeck = createDeck();
     setGameState(prev => ({
       ...prev,
@@ -96,9 +66,14 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
       cutDeckAmount: 0
     }));
     setSelectedCards([]);
+    setShowOpponentCards(false);
+    setPlayerMessage(null);
+    setOpponentMessage(null);
+    setWinningHand(null);
   };
-
+  
   const handleOpponentTurn = (phase: GamePhase) => {
+    // This is a placeholder that will call the appropriate phase handler
     if (gameState.playerTurn || gameState.winner) return;
     
     if (phase === 'firstBet' || phase === 'secondBet') {
@@ -107,15 +82,18 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
       handleOpponentCardSwap();
     }
   };
-
+  
   const handleOpponentBetting = (phase: GamePhase) => {
+    // This would be implemented in useBetting but we're adding a simplified version here
     console.log(`Opponent betting in phase: ${phase}`);
   };
-
+  
   const handleOpponentCardSwap = () => {
+    // This would be implemented in useCardSwap but we're adding a simplified version here
     console.log('Opponent swapping cards');
   };
-
+  
+  // Import functions from the separate hook files
   const { handleAnte } = useAnte(
     gameState,
     setGameState,
@@ -123,7 +101,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setOpponentMessage,
     updateLocalStorage
   );
-
+  
   const { handleCutDeck, handleCutAmountChange } = useCutDeck(
     gameState,
     setGameState,
@@ -133,7 +111,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     cutAmount,
     setCutAmount
   );
-
+  
   const { handleBetAction } = useBetting(
     gameState,
     setGameState,
@@ -143,7 +121,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setShowOpponentCards,
     updateLocalStorage
   );
-
+  
   const { handleCardSwap, handleCardSelect } = useCardSwap(
     gameState,
     setGameState,
@@ -152,7 +130,7 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setPlayerMessage,
     handleOpponentTurn
   );
-
+  
   const { handleShowdown, handleNextRound, handlePlayAgain } = useShowdown(
     gameState,
     setGameState,
@@ -162,11 +140,9 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     setWinningHand,
     selectedCards,
     setSelectedCards,
-    updateLocalStorage,
-    saveRoundData,
-    roundsWon
+    updateLocalStorage
   );
-
+  
   return {
     gameState,
     selectedCards,
@@ -175,7 +151,6 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
     opponentMessage,
     winningHand,
     cutAmount,
-    roundsWon,
     handleAnte,
     handleCutDeck,
     handleBetAction,
