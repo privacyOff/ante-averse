@@ -105,6 +105,8 @@ export const usePokerGame = (initialDifficulty: string = 'beginner') => {
       handleOpponentBetting(phase);
     } else if (phase === 'swap') {
       handleOpponentCardSwap();
+    } else if (phase === 'showdown') {
+      handleShowdown();
     }
   };
 
